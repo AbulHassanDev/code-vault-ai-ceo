@@ -10,7 +10,12 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { aiChat, decideApproval, runDailyLoop, toggleAgent, updateAiSettings } from "@/lib/ai.functions";
+import { paymentQueue, setPaymentMode, verifyPaymentManually } from "@/lib/payment-queue.functions";
 import { toast } from "sonner";
+
+const money = (cents: number, currency = "USD") =>
+  `${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
+
 
 export const Route = createFileRoute("/_authenticated/admin/ai")({
   head: () => ({
