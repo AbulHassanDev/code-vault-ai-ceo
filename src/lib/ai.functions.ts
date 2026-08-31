@@ -89,7 +89,7 @@ export const decideApproval = createServerFn({ method: "POST" })
 
     if (data.decision === "reject") return { ok: true, message: "Proposal rejected." };
     const outcome = await executeApproval(supabase, userId, data.approvalId);
-    return outcome;
+    return { ok: outcome.ok, message: outcome.message };
   });
 
 export const updateAiSettings = createServerFn({ method: "POST" })
