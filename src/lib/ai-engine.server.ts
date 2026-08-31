@@ -68,6 +68,28 @@ export async function executeTool(
   const def = TOOL_MAP.get(toolName);
   if (!def) return { ok: false, message: `Unknown tool "${toolName}".` };
 
+  // Kill switch: no tool may mutate anything while stopped or paused.
+  if (def.permission !== "LEVEL_3" && def.handler) {
+    const settings = await loadSettings(ctx.supabase);
+    const halted = settings.emergency_stop || !settings.ai_enabled || settings.paused;
+    const mutating = def.risk !== "low" || !toolName.startsWith("get_");
+    if (halted && mutating) {
+      await logActivity(ctx.supabase, {
+        agent_key: ctx.agentKey,
+        action: "tool_blocked_halted",
+        tool_name: toolName,
+        result: "blocked",
+      });
+      return {
+        ok: false,
+        message: settings.emergency_stop
+          ? "Emergency stop is active — all autonomous actions are blocked until the founder clears it."
+          : "Autonomous execution is paused. Only analysis is available.",
+      };
+    }
+  }
+
+
   const parsed = (def.schema as z.ZodTypeAny).safeParse(args ?? {});
   if (!parsed.success) {
     await logActivity(ctx.supabase, {
