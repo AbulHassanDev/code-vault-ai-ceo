@@ -191,17 +191,30 @@ function CommandCenter() {
             {(approvals.data ?? []).map((a: any) => (
               <div key={a.id} className="panel p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Badge variant={(RISK[a.risk_level] as any) ?? "secondary"}>{a.risk_level} risk</Badge>
+                    {a.agent_role && <Badge variant="secondary">{a.agent_role}</Badge>}
                     <span className="font-mono text-xs text-muted-foreground">{a.tool_name}</span>
+                    {a.task_id && <span className="font-mono text-xs text-muted-foreground">{a.task_id}</span>}
                   </div>
                   <Badge variant={a.status === "pending" ? "outline" : "secondary"}>{a.status}</Badge>
                 </div>
                 <h3 className="mt-3 font-semibold">{a.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{a.rationale}</p>
-                {a.expected_impact && (
-                  <p className="mt-2 font-mono text-xs text-primary">Expected impact: {a.expected_impact}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{a.reason ?? a.rationale}</p>
+                {a.expected_outcome && (
+                  <p className="mt-2 font-mono text-xs text-primary">Expected outcome: {a.expected_outcome}</p>
                 )}
+                {a.proposal && (
+                  <details className="mt-3">
+                    <summary className="cursor-pointer font-mono text-xs text-muted-foreground">
+                      proposal.json
+                    </summary>
+                    <pre className="mt-2 overflow-x-auto rounded-md bg-muted/40 p-3 font-mono text-[11px]">
+                      {JSON.stringify(a.proposal, null, 2)}
+                    </pre>
+                  </details>
+                )}
+
                 {a.status === "pending" && (
                   <div className="mt-4 flex gap-2">
                     <Button
