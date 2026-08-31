@@ -143,6 +143,30 @@ export const requestDownload = createServerFn({ method: "POST" })
       : { ok: false, message: "Could not create a download link. An incident has been logged." };
   });
 
+/** Buyer attaches their Binance TxID as proof. Never marks the order paid — founder verification only. */
+export const submitPaymentProof = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ orderId: z.string().uuid(), txid: z.string().min(6).max(120) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as any;
+    const { data: order, error } = await supabase
+      .from("orders")
+      .update({ buyer_txid: data.txid.trim() })
+      .eq("id", data.orderId)
+      .eq("user_id", userId)
+      .eq("status", "pending")
+      .select("id,merchant_trade_no")
+      .maybeSingle();
+    if (error || !order) return { ok: false, message: "Pending order not found." };
+    await supabase.from("ai_events").insert({
+      type: "payment_proof_submitted",
+      payload: { order_id: order.id, merchant_trade_no: order.merchant_trade_no },
+    });
+    return { ok: true, message: "Payment proof received. Awaiting founder verification." };
+  });
+
 export const myLibrary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
