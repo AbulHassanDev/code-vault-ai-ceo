@@ -402,12 +402,31 @@ const writeLevel1Tools: ToolDefinition[] = [
 const level2Tools: ToolDefinition[] = [
   {
     name: "publish_product",
-    description: "Publish a product to the public marketplace. Requires founder approval.",
+    description:
+      "Publish a product to the public marketplace. Requires founder approval. Blocked unless the listing has a sandbox preview URL, repository reference, licence type, download asset and SEO metadata.",
     permission: "LEVEL_2",
     risk: "high",
     schema: z.object({ slug: z.string() }),
     summarize: (a) => `Publish product "${a.slug}" to the public marketplace`,
     handler: async ({ slug }, { supabase }) => {
+      const { data: product } = await supabase
+        .from("products")
+        .select("slug,sandbox_url,repo_ref,license_type,asset_path,seo_title,seo_description,description")
+        .eq("slug", slug)
+        .maybeSingle();
+      if (!product) throw new Error(`Product "${slug}" not found.`);
+      const missing = [
+        !product.sandbox_url && "sandbox_url",
+        !product.repo_ref && "repo_ref",
+        !product.license_type && "license_type",
+        !product.asset_path && "asset_path",
+        !product.seo_title && "seo_title",
+        !product.seo_description && "seo_description",
+        (product.description?.length ?? 0) < 80 && "description",
+      ].filter(Boolean);
+      if (missing.length) {
+        throw new Error(`Listing quality gate failed — missing: ${missing.join(", ")}. Fix these before publishing.`);
+      }
       const { data, error } = await supabase
         .from("products")
         .update({ status: "published" })
@@ -418,6 +437,7 @@ const level2Tools: ToolDefinition[] = [
       return data;
     },
   },
+
   {
     name: "unpublish_product",
     description: "Remove a product from the public marketplace. Requires founder approval.",
