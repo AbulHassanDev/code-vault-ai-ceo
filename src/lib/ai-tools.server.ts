@@ -545,6 +545,47 @@ const level2Tools: ToolDefinition[] = [
       return { queued: true, order_id: args.order_id };
     },
   },
+  {
+    name: "create_discount_code",
+    description: "Create a promotional discount code. Revenue impact — requires founder approval.",
+    permission: "LEVEL_2",
+    risk: "high",
+    schema: z.object({ code: z.string(), percent_off: z.number().int(), reason: z.string() }),
+    summarize: (a) => `Create discount code ${a.code} at ${a.percent_off}% off — ${a.reason}`,
+    handler: async ({ code, percent_off }, { supabase }) => {
+      const pct = Math.min(Math.max(Math.trunc(percent_off), 1), 90);
+      const { data, error } = await supabase
+        .from("discount_codes")
+        .insert({ code: code.toUpperCase(), percent_off: pct, active: true })
+        .select("code,percent_off,active")
+        .single();
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  },
+  {
+    name: "propose_seller_payout",
+    description:
+      "Record a proposed seller payout for the founder to settle manually. The AI never moves money — this only writes a payout record. Requires founder approval.",
+    permission: "LEVEL_2",
+    risk: "high",
+    schema: z.object({ seller_reference: z.string(), amount_cents: z.number().int(), reason: z.string() }),
+    summarize: (a) => `Record a ${money(a.amount_cents)} payout for ${a.seller_reference} — ${a.reason}`,
+    handler: async (args, { supabase }) => {
+      const { data, error } = await supabase
+        .from("seller_payouts")
+        .insert({
+          amount_cents: Math.max(0, Math.trunc(args.amount_cents)),
+          reference: args.seller_reference,
+          note: args.reason,
+          status: "proposed",
+        })
+        .select("id,amount_cents,status")
+        .single();
+      if (error) throw new Error(error.message);
+      return { ...data, note: "Recorded only. The founder settles this outside the AI system." };
+    },
+  },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -561,6 +602,14 @@ const level3Tools: ToolDefinition[] = [
     schema: z.object({ order_id: z.string(), reason: z.string() }),
   },
   {
+    name: "mark_order_paid",
+    description:
+      "HUMAN ONLY AND STRUCTURALLY IMPOSSIBLE. Orders only become paid through a signature-verified Binance Pay callback. Calling this returns a refusal.",
+    permission: "LEVEL_3",
+    risk: "critical",
+    schema: z.object({ order_id: z.string() }),
+  },
+  {
     name: "transfer_funds",
     description: "HUMAN ONLY. The AI can never move money. Calling this returns a refusal.",
     permission: "LEVEL_3",
@@ -574,7 +623,15 @@ const level3Tools: ToolDefinition[] = [
     risk: "critical",
     schema: z.object({ user_id: z.string() }),
   },
+  {
+    name: "change_payment_configuration",
+    description: "HUMAN ONLY. Payment provider keys, certificates and payout destinations are founder-only.",
+    permission: "LEVEL_3",
+    risk: "critical",
+    schema: z.object({ change: z.string() }),
+  },
 ];
+
 
 export const TOOLS: ToolDefinition[] = [
   ...readTools,
