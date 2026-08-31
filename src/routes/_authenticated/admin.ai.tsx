@@ -82,8 +82,28 @@ function CommandCenter() {
       (await supabase.from("ai_reports").select("*").order("created_at", { ascending: false }).limit(10)).data ?? [],
   });
 
+  const payments = useQuery({
+    queryKey: ["payment-queue"],
+    queryFn: () => loadPayments({}),
+    refetchInterval: 20000,
+  });
+
   const s = settings.data as any;
   const pending = (approvals.data ?? []).filter((a: any) => a.status === "pending");
+  const metrics = payments.data?.metrics;
+  const paymentOrders = payments.data?.orders ?? [];
+  const awaitingVerification = paymentOrders.filter((o) => o.status === "pending");
+
+  async function decidePayment(orderId: string, decision: "approve" | "flag" | "reject") {
+    try {
+      const r = await verifyPayment({ data: { orderId, decision } });
+      r.ok ? toast.success(r.message) : toast.error(r.message);
+      payments.refetch();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Action failed");
+    }
+  }
+
 
   async function send() {
     const text = input.trim();
