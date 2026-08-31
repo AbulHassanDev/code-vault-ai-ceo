@@ -40,18 +40,7 @@ export async function loadSettings(supabase: Db): Promise<AiSettings> {
 
 export async function logActivity(
   supabase: Db,
-  entry: {
-    agent_key?: string;
-    action: string;
-    tool_name?: string;
-    input_summary?: string;
-    output_summary?: string;
-    risk_level?: string;
-    approval_required?: boolean;
-    approval_id?: string;
-    result?: string;
-    error?: string;
-  },
+  entry: Record<string, string | boolean | undefined> & { action: string },
 ) {
   await supabase.from("ai_activity_logs").insert(entry);
 }
@@ -158,11 +147,11 @@ export async function executeTool(
 }
 
 async function captureState(supabase: Db, def: ToolDefinition, input: Record<string, unknown>) {
-  if (typeof input.slug !== "string") return null;
+  if (typeof input["slug"] !== "string") return null;
   const { data } = await supabase
     .from("products")
     .select("slug,title,status,price_cents,seo_title,seo_description,description,tags")
-    .eq("slug", input.slug)
+    .eq("slug", input["slug"] as string)
     .maybeSingle();
   return data ?? null;
 }
@@ -262,7 +251,7 @@ function buildTools(ctx: ToolContext & { agentKey?: string }) {
       },
     }),
   ]);
-  return Object.fromEntries(entries) as Record<string, ReturnType<typeof tool>>;
+  return Object.fromEntries(entries) as any;
 }
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
