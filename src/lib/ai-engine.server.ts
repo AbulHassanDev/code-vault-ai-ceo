@@ -185,10 +185,29 @@ async function createApproval(
   agentKey?: string,
 ) {
   const before = await captureState(supabase, def, input);
+  const taskId = `TASK-${Date.now().toString(36).toUpperCase()}`;
+  const agentRole = AGENT_ROLE_BY_TOOL[def.name] ?? "AI_CEO";
+  const proposal = {
+    task_id: taskId,
+    agent_role: agentRole,
+    action_type: "PROPOSE_APPROVAL",
+    permission_level: def.permission,
+    risk_level: def.risk,
+    summary: def.summarize?.(input) ?? `Run ${def.name}`,
+    reason: (input as any).reason ?? def.description,
+    tool: def.name,
+    payload: input,
+    expected_outcome: def.description,
+    reversible: def.name !== "send_customer_message" && def.name !== "create_campaign",
+  };
   const { data, error } = await supabase
     .from("ai_approvals")
     .insert({
       agent_key: agentKey ?? "CEO",
+      agent_role: agentRole,
+      action_type: "PROPOSE_APPROVAL",
+      task_id: taskId,
+      proposal,
       tool_name: def.name,
       args: input,
       args_hash: stableHash(input),
@@ -203,6 +222,7 @@ async function createApproval(
     .select("id")
     .single();
   if (error) throw new Error(error.message);
+
   await logActivity(supabase, {
     agent_key: agentKey,
     action: "approval_requested",
