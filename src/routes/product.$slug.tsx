@@ -66,9 +66,10 @@ function ProductPage() {
         <aside className="panel h-fit p-6">
           <div className="font-mono text-3xl text-primary">${(product.price_cents / 100).toFixed(0)}</div>
           <p className="mt-1 text-xs text-muted-foreground">One commercial license · lifetime updates</p>
-          <Button className="mt-5 w-full" size="lg" onClick={buy} disabled={busy}>
-            {busy ? "Creating order…" : "Buy source code"}
+          <Button className="mt-5 w-full" size="lg" onClick={buy}>
+            Buy source code
           </Button>
+
           {product.demo_url && (
             <a href={product.demo_url} target="_blank" rel="noreferrer">
               <Button variant="outline" className="mt-3 w-full">
