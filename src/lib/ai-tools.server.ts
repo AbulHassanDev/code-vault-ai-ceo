@@ -256,8 +256,54 @@ const readTools: ToolDefinition[] = [
       const { data } = await q;
       return data ?? [];
     },
+  {
+    name: "get_payment_verification_log",
+    description:
+      "Read the Binance Pay callback log: signature validity, amount match and fulfilment outcome per order. Use this before making any claim about whether a payment is real.",
+    permission: "LEVEL_1",
+    risk: "low",
+    schema: z.object({ days: z.number().int().describe("Lookback window in days") }),
+    handler: async ({ days }, { supabase }) => {
+      const since = new Date(Date.now() - Math.min(Math.max(days || 7, 1), 90) * 86_400_000).toISOString();
+      const { data } = await supabase
+        .from("payment_webhook_events")
+        .select("provider,merchant_trade_no,transaction_id,signature_valid,amount_matched,status,error,created_at")
+        .gte("created_at", since)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      return {
+        events: data ?? [],
+        note: "Only signature_valid=true AND amount_matched=true events represent verified revenue.",
+      };
+    },
+  },
+  {
+    name: "audit_listing_readiness",
+    description:
+      "Check which listings meet the publishing gate: sandbox preview URL, repository reference, licence type, download asset, SEO metadata and description depth.",
+    permission: "LEVEL_1",
+    risk: "low",
+    schema: z.object({}),
+    handler: async (_args, { supabase }) => {
+      const { data } = await supabase
+        .from("products")
+        .select("slug,title,status,sandbox_url,repo_ref,license_type,asset_path,seo_title,seo_description,description,quality_score");
+      return (data ?? []).map((p: any) => {
+        const blockers = [
+          !p.sandbox_url && "sandbox_url",
+          !p.repo_ref && "repo_ref",
+          !p.license_type && "license_type",
+          !p.asset_path && "asset_path",
+          !p.seo_title && "seo_title",
+          !p.seo_description && "seo_description",
+          (p.description?.length ?? 0) < 80 && "description",
+        ].filter(Boolean);
+        return { slug: p.slug, status: p.status, quality_score: p.quality_score, publish_blockers: blockers };
+      });
+    },
   },
 ];
+
 
 const writeLevel1Tools: ToolDefinition[] = [
   {
