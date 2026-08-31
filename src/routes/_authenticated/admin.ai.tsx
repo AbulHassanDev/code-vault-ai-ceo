@@ -451,7 +451,56 @@ function CommandCenter() {
                 <Switch checked={Boolean(s?.[row.key])} onCheckedChange={(v) => patch({ [row.key]: v })} />
               </div>
             ))}
+
+            <div className="border-t border-border pt-5">
+              <p className="font-medium">Payment mode</p>
+              <p className="text-sm text-muted-foreground">
+                Choose how buyer payments are confirmed. Both modes keep fulfilment out of AI hands.
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {[
+                  {
+                    mode: "manual" as const,
+                    title: "Manual Binance Pay ID / QR",
+                    help: "Buyers submit a TxID; you verify each payment in the founder queue.",
+                  },
+                  {
+                    mode: "merchant_api" as const,
+                    title: "Binance Pay Merchant API",
+                    help: "Signed webhooks fulfil orders automatically after RSA verification.",
+                  },
+                ].map((opt) => {
+                  const active = (s?.payment_mode ?? "manual") === opt.mode;
+                  return (
+                    <button
+                      key={opt.mode}
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const r = await changePaymentMode({ data: { mode: opt.mode } });
+                          toast.success(r.message);
+                          settings.refetch();
+                        } catch (error) {
+                          toast.error(error instanceof Error ? error.message : "Update failed");
+                        }
+                      }}
+                      className={`rounded-lg border p-4 text-left transition ${
+                        active ? "border-primary bg-primary/10" : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium">{opt.title}</p>
+                        {active && <Badge>active</Badge>}
+                      </div>
+                      <p className="mt-1 text-sm text-muted-foreground">{opt.help}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <p className="border-t border-border pt-4 font-mono text-xs text-muted-foreground">
+
               Refunds, payouts and fund transfers are permanently human-only and cannot be enabled here.
             </p>
           </TabsContent>
