@@ -310,7 +310,7 @@ function CommandCenter() {
                   {[
                     { k: "Buyer", v: o.buyerEmail ?? o.buyerName ?? "unknown" },
                     { k: "Product", v: o.productTitle },
-                    { k: "Expected amount", v: money(o.amountCents, o.currency) },
+                    { k: "Expected amount", v: money(o.amountCents) },
                     { k: "Order reference", v: o.merchantTradeNo ?? o.id },
                   ].map((f) => (
                     <div key={f.k}>
@@ -439,7 +439,7 @@ function CommandCenter() {
                 )}
               </div>
             ))}
-            {(approvals.data ?? []).length === 0 && (
+            {(approvals.data ?? []).filter((a: any) => APPROVAL_FILTERS.find((f) => f.key === approvalFilter)?.match(a)).length === 0 && (
               <p className="panel p-8 text-center text-muted-foreground">No proposals yet.</p>
             )}
           </TabsContent>
