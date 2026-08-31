@@ -18,12 +18,18 @@ export const paymentQueue = createServerFn({ method: "GET" })
     const { data: orders } = await supabaseAdmin
       .from("orders")
       .select(
-        "id,status,amount_cents,currency,merchant_trade_no,buyer_txid,provider,provider_tx_id,verification_note,verified_at,created_at,user_id,product_id,products(title,slug),profiles:user_id(email,display_name)",
+        "id,status,amount_cents,currency,merchant_trade_no,buyer_txid,provider,provider_tx_id,verification_note,verified_at,created_at,user_id,product_id,products(title,slug)",
       )
       .order("created_at", { ascending: false })
       .limit(100);
 
     const rows = (orders ?? []) as any[];
+    const { data: profiles } = await supabaseAdmin
+      .from("profiles")
+      .select("id,email,display_name")
+      .in("id", Array.from(new Set(rows.map((o) => o.user_id))).slice(0, 100));
+    const byUser = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+
     const startOfDay = new Date();
     startOfDay.setUTCHours(0, 0, 0, 0);
 
