@@ -103,8 +103,10 @@ export type Database = {
       }
       ai_approvals: {
         Row: {
+          action_type: string
           after_state: Json | null
           agent_key: string | null
+          agent_role: string | null
           args: Json
           args_hash: string
           before_state: Json | null
@@ -119,15 +121,19 @@ export type Database = {
           expected_outcome: string | null
           expires_at: string
           id: string
+          proposal: Json | null
           reason: string | null
           risk_level: string
           status: string
+          task_id: string | null
           title: string
           tool_name: string
         }
         Insert: {
+          action_type?: string
           after_state?: Json | null
           agent_key?: string | null
+          agent_role?: string | null
           args?: Json
           args_hash: string
           before_state?: Json | null
@@ -142,15 +148,19 @@ export type Database = {
           expected_outcome?: string | null
           expires_at?: string
           id?: string
+          proposal?: Json | null
           reason?: string | null
           risk_level?: string
           status?: string
+          task_id?: string | null
           title: string
           tool_name: string
         }
         Update: {
+          action_type?: string
           after_state?: Json | null
           agent_key?: string | null
+          agent_role?: string | null
           args?: Json
           args_hash?: string
           before_state?: Json | null
@@ -165,9 +175,11 @@ export type Database = {
           expected_outcome?: string | null
           expires_at?: string
           id?: string
+          proposal?: Json | null
           reason?: string | null
           risk_level?: string
           status?: string
+          task_id?: string | null
           title?: string
           tool_name?: string
         }
@@ -535,6 +547,33 @@ export type Database = {
           },
         ]
       }
+      discount_codes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          percent_off: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          percent_off?: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          percent_off?: number
+        }
+        Relationships: []
+      }
       download_events: {
         Row: {
           created_at: string
@@ -577,12 +616,15 @@ export type Database = {
           currency: string
           failure_reason: string | null
           id: string
+          merchant_trade_no: string | null
           product_id: string
           provider: string
           provider_ref: string | null
+          provider_tx_id: string | null
           status: string
           updated_at: string
           user_id: string
+          verified_at: string | null
         }
         Insert: {
           amount_cents: number
@@ -590,12 +632,15 @@ export type Database = {
           currency?: string
           failure_reason?: string | null
           id?: string
+          merchant_trade_no?: string | null
           product_id: string
           provider?: string
           provider_ref?: string | null
+          provider_tx_id?: string | null
           status?: string
           updated_at?: string
           user_id: string
+          verified_at?: string | null
         }
         Update: {
           amount_cents?: number
@@ -603,12 +648,15 @@ export type Database = {
           currency?: string
           failure_reason?: string | null
           id?: string
+          merchant_trade_no?: string | null
           product_id?: string
           provider?: string
           provider_ref?: string | null
+          provider_tx_id?: string | null
           status?: string
           updated_at?: string
           user_id?: string
+          verified_at?: string | null
         }
         Relationships: [
           {
@@ -620,6 +668,45 @@ export type Database = {
           },
         ]
       }
+      payment_webhook_events: {
+        Row: {
+          amount_matched: boolean
+          created_at: string
+          error: string | null
+          id: string
+          merchant_trade_no: string | null
+          payload: Json
+          provider: string
+          signature_valid: boolean
+          status: string
+          transaction_id: string | null
+        }
+        Insert: {
+          amount_matched?: boolean
+          created_at?: string
+          error?: string | null
+          id?: string
+          merchant_trade_no?: string | null
+          payload?: Json
+          provider?: string
+          signature_valid?: boolean
+          status?: string
+          transaction_id?: string | null
+        }
+        Update: {
+          amount_matched?: boolean
+          created_at?: string
+          error?: string | null
+          id?: string
+          merchant_trade_no?: string | null
+          payload?: Json
+          provider?: string
+          signature_valid?: boolean
+          status?: string
+          transaction_id?: string | null
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           asset_path: string | null
@@ -629,11 +716,16 @@ export type Database = {
           demo_url: string | null
           description: string | null
           id: string
+          license_type: string
           price_cents: number
           quality_score: number | null
+          repo_ref: string | null
+          repo_visibility: string
+          sandbox_url: string | null
           seo_description: string | null
           seo_title: string | null
           slug: string
+          static_analysis: Json | null
           status: string
           tagline: string | null
           tags: string[]
@@ -650,11 +742,16 @@ export type Database = {
           demo_url?: string | null
           description?: string | null
           id?: string
+          license_type?: string
           price_cents?: number
           quality_score?: number | null
+          repo_ref?: string | null
+          repo_visibility?: string
+          sandbox_url?: string | null
           seo_description?: string | null
           seo_title?: string | null
           slug: string
+          static_analysis?: Json | null
           status?: string
           tagline?: string | null
           tags?: string[]
@@ -671,11 +768,16 @@ export type Database = {
           demo_url?: string | null
           description?: string | null
           id?: string
+          license_type?: string
           price_cents?: number
           quality_score?: number | null
+          repo_ref?: string | null
+          repo_visibility?: string
+          sandbox_url?: string | null
           seo_description?: string | null
           seo_title?: string | null
           slug?: string
+          static_analysis?: Json | null
           status?: string
           tagline?: string | null
           tags?: string[]
@@ -751,6 +853,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      seller_payouts: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency: string
+          id: string
+          method: string
+          note: string | null
+          reference: string | null
+          seller_id: string | null
+          status: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          currency?: string
+          id?: string
+          method?: string
+          note?: string | null
+          reference?: string | null
+          seller_id?: string | null
+          status?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          method?: string
+          note?: string | null
+          reference?: string | null
+          seller_id?: string | null
+          status?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {

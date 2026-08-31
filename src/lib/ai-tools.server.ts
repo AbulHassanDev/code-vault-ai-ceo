@@ -257,7 +257,55 @@ const readTools: ToolDefinition[] = [
       return data ?? [];
     },
   },
+  {
+
+    name: "get_payment_verification_log",
+    description:
+      "Read the Binance Pay callback log: signature validity, amount match and fulfilment outcome per order. Use this before making any claim about whether a payment is real.",
+    permission: "LEVEL_1",
+    risk: "low",
+    schema: z.object({ days: z.number().int().describe("Lookback window in days") }),
+    handler: async ({ days }, { supabase }) => {
+      const since = new Date(Date.now() - Math.min(Math.max(days || 7, 1), 90) * 86_400_000).toISOString();
+      const { data } = await supabase
+        .from("payment_webhook_events")
+        .select("provider,merchant_trade_no,transaction_id,signature_valid,amount_matched,status,error,created_at")
+        .gte("created_at", since)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      return {
+        events: data ?? [],
+        note: "Only signature_valid=true AND amount_matched=true events represent verified revenue.",
+      };
+    },
+  },
+  {
+    name: "audit_listing_readiness",
+    description:
+      "Check which listings meet the publishing gate: sandbox preview URL, repository reference, licence type, download asset, SEO metadata and description depth.",
+    permission: "LEVEL_1",
+    risk: "low",
+    schema: z.object({}),
+    handler: async (_args, { supabase }) => {
+      const { data } = await supabase
+        .from("products")
+        .select("slug,title,status,sandbox_url,repo_ref,license_type,asset_path,seo_title,seo_description,description,quality_score");
+      return (data ?? []).map((p: any) => {
+        const blockers = [
+          !p.sandbox_url && "sandbox_url",
+          !p.repo_ref && "repo_ref",
+          !p.license_type && "license_type",
+          !p.asset_path && "asset_path",
+          !p.seo_title && "seo_title",
+          !p.seo_description && "seo_description",
+          (p.description?.length ?? 0) < 80 && "description",
+        ].filter(Boolean);
+        return { slug: p.slug, status: p.status, quality_score: p.quality_score, publish_blockers: blockers };
+      });
+    },
+  },
 ];
+
 
 const writeLevel1Tools: ToolDefinition[] = [
   {
@@ -402,12 +450,31 @@ const writeLevel1Tools: ToolDefinition[] = [
 const level2Tools: ToolDefinition[] = [
   {
     name: "publish_product",
-    description: "Publish a product to the public marketplace. Requires founder approval.",
+    description:
+      "Publish a product to the public marketplace. Requires founder approval. Blocked unless the listing has a sandbox preview URL, repository reference, licence type, download asset and SEO metadata.",
     permission: "LEVEL_2",
     risk: "high",
     schema: z.object({ slug: z.string() }),
     summarize: (a) => `Publish product "${a.slug}" to the public marketplace`,
     handler: async ({ slug }, { supabase }) => {
+      const { data: product } = await supabase
+        .from("products")
+        .select("slug,sandbox_url,repo_ref,license_type,asset_path,seo_title,seo_description,description")
+        .eq("slug", slug)
+        .maybeSingle();
+      if (!product) throw new Error(`Product "${slug}" not found.`);
+      const missing = [
+        !product.sandbox_url && "sandbox_url",
+        !product.repo_ref && "repo_ref",
+        !product.license_type && "license_type",
+        !product.asset_path && "asset_path",
+        !product.seo_title && "seo_title",
+        !product.seo_description && "seo_description",
+        (product.description?.length ?? 0) < 80 && "description",
+      ].filter(Boolean);
+      if (missing.length) {
+        throw new Error(`Listing quality gate failed — missing: ${missing.join(", ")}. Fix these before publishing.`);
+      }
       const { data, error } = await supabase
         .from("products")
         .update({ status: "published" })
@@ -418,6 +485,7 @@ const level2Tools: ToolDefinition[] = [
       return data;
     },
   },
+
   {
     name: "unpublish_product",
     description: "Remove a product from the public marketplace. Requires founder approval.",
@@ -525,6 +593,47 @@ const level2Tools: ToolDefinition[] = [
       return { queued: true, order_id: args.order_id };
     },
   },
+  {
+    name: "create_discount_code",
+    description: "Create a promotional discount code. Revenue impact — requires founder approval.",
+    permission: "LEVEL_2",
+    risk: "high",
+    schema: z.object({ code: z.string(), percent_off: z.number().int(), reason: z.string() }),
+    summarize: (a) => `Create discount code ${a.code} at ${a.percent_off}% off — ${a.reason}`,
+    handler: async ({ code, percent_off }, { supabase }) => {
+      const pct = Math.min(Math.max(Math.trunc(percent_off), 1), 90);
+      const { data, error } = await supabase
+        .from("discount_codes")
+        .insert({ code: code.toUpperCase(), percent_off: pct, active: true })
+        .select("code,percent_off,active")
+        .single();
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  },
+  {
+    name: "propose_seller_payout",
+    description:
+      "Record a proposed seller payout for the founder to settle manually. The AI never moves money — this only writes a payout record. Requires founder approval.",
+    permission: "LEVEL_2",
+    risk: "high",
+    schema: z.object({ seller_reference: z.string(), amount_cents: z.number().int(), reason: z.string() }),
+    summarize: (a) => `Record a ${money(a.amount_cents)} payout for ${a.seller_reference} — ${a.reason}`,
+    handler: async (args, { supabase }) => {
+      const { data, error } = await supabase
+        .from("seller_payouts")
+        .insert({
+          amount_cents: Math.max(0, Math.trunc(args.amount_cents)),
+          reference: args.seller_reference,
+          note: args.reason,
+          status: "proposed",
+        })
+        .select("id,amount_cents,status")
+        .single();
+      if (error) throw new Error(error.message);
+      return { ...data, note: "Recorded only. The founder settles this outside the AI system." };
+    },
+  },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -541,6 +650,14 @@ const level3Tools: ToolDefinition[] = [
     schema: z.object({ order_id: z.string(), reason: z.string() }),
   },
   {
+    name: "mark_order_paid",
+    description:
+      "HUMAN ONLY AND STRUCTURALLY IMPOSSIBLE. Orders only become paid through a signature-verified Binance Pay callback. Calling this returns a refusal.",
+    permission: "LEVEL_3",
+    risk: "critical",
+    schema: z.object({ order_id: z.string() }),
+  },
+  {
     name: "transfer_funds",
     description: "HUMAN ONLY. The AI can never move money. Calling this returns a refusal.",
     permission: "LEVEL_3",
@@ -554,7 +671,15 @@ const level3Tools: ToolDefinition[] = [
     risk: "critical",
     schema: z.object({ user_id: z.string() }),
   },
+  {
+    name: "change_payment_configuration",
+    description: "HUMAN ONLY. Payment provider keys, certificates and payout destinations are founder-only.",
+    permission: "LEVEL_3",
+    risk: "critical",
+    schema: z.object({ change: z.string() }),
+  },
 ];
+
 
 export const TOOLS: ToolDefinition[] = [
   ...readTools,
