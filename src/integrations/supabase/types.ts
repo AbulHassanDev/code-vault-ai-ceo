@@ -612,6 +612,7 @@ export type Database = {
       orders: {
         Row: {
           amount_cents: number
+          buyer_txid: string | null
           created_at: string
           currency: string
           failure_reason: string | null
@@ -628,6 +629,7 @@ export type Database = {
         }
         Insert: {
           amount_cents: number
+          buyer_txid?: string | null
           created_at?: string
           currency?: string
           failure_reason?: string | null
@@ -644,6 +646,7 @@ export type Database = {
         }
         Update: {
           amount_cents?: number
+          buyer_txid?: string | null
           created_at?: string
           currency?: string
           failure_reason?: string | null
