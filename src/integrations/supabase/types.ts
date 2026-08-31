@@ -460,6 +460,7 @@ export type Database = {
           id: boolean
           pause_reason: string | null
           paused: boolean
+          payment_mode: string
           updated_at: string
         }
         Insert: {
@@ -472,6 +473,7 @@ export type Database = {
           id?: boolean
           pause_reason?: string | null
           paused?: boolean
+          payment_mode?: string
           updated_at?: string
         }
         Update: {
@@ -484,6 +486,7 @@ export type Database = {
           id?: boolean
           pause_reason?: string | null
           paused?: boolean
+          payment_mode?: string
           updated_at?: string
         }
         Relationships: []
@@ -625,7 +628,9 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string
+          verification_note: string | null
           verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
           amount_cents: number
@@ -642,7 +647,9 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id: string
+          verification_note?: string | null
           verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
           amount_cents?: number
@@ -659,7 +666,9 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+          verification_note?: string | null
           verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: [
           {
