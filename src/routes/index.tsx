@@ -1,24 +1,145 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
+import { SiteHeader } from "@/components/site-header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { listPublicProducts } from "@/lib/marketplace.functions";
+import { useState } from "react";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
-export const Route = createFileRoute("/")({
-  component: Index,
+const productsQuery = queryOptions({
+  queryKey: ["public-products"],
+  queryFn: () => listPublicProducts(),
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "CodeVault — Premium Source Code & SaaS Starter Kits" },
+      {
+        name: "description",
+        content:
+          "Buy production-ready React, Next.js, MERN, Flutter and AI application source code. Instant secure delivery from an AI-operated marketplace.",
+      },
+      { property: "og:title", content: "CodeVault — Premium Source Code Marketplace" },
+      {
+        property: "og:description",
+        content: "Production-ready source code, SaaS starter kits, dashboards and AI apps for developers.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  loader: ({ context }) => context.queryClient.ensureQueryData(productsQuery),
+  errorComponent: ({ error }) => (
+    <div className="p-10 text-center text-muted-foreground">Catalog unavailable: {error.message}</div>
+  ),
+  notFoundComponent: () => <div className="p-10 text-center">Not found</div>,
+  component: Marketplace,
+});
+
+const money = (cents: number) => `$${(cents / 100).toFixed(0)}`;
+
+function Marketplace() {
+  const { data: products } = useSuspenseQuery(productsQuery);
+  const [category, setCategory] = useState<string>("all");
+  const [query, setQuery] = useState("");
+
+  const categories = ["all", ...Array.from(new Set(products.map((p: any) => p.category)))];
+  const filtered = products.filter(
+    (p: any) =>
+      (category === "all" || p.category === category) &&
+      (query === "" || `${p.title} ${p.tagline} ${p.tech?.join(" ")}`.toLowerCase().includes(query.toLowerCase())),
+  );
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="min-h-screen">
+      <SiteHeader />
+
+      <section className="grid-lines border-b border-border">
+        <div className="mx-auto max-w-6xl px-4 py-20">
+          <Badge variant="outline" className="mb-6 font-mono text-xs tracking-widest text-primary">
+            AI-OPERATED MARKETPLACE
+          </Badge>
+          <h1 className="max-w-3xl text-5xl font-semibold leading-[1.05] tracking-tight">
+            Production source code, shipped by an autonomous storefront.
+          </h1>
+          <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
+            SaaS starter kits, dashboards, mobile apps and AI applications — reviewed for quality, delivered securely,
+            and operated day to day by an AI system under founder control.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <a href="#catalog">
+              <Button size="lg">Browse the catalog</Button>
+            </a>
+            <Link to="/auth">
+              <Button size="lg" variant="outline">
+                Create an account
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section id="catalog" className="mx-auto max-w-6xl px-4 py-14">
+        <div className="mb-8 flex flex-wrap items-center gap-3">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search stacks, e.g. Next.js"
+            className="h-10 w-64 rounded-md border border-input bg-card px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+          />
+          <div className="flex flex-wrap gap-2">
+            {categories.map((c) => (
+              <button
+                key={c}
+                onClick={() => setCategory(c)}
+                className={`rounded-full border px-3 py-1 font-mono text-xs uppercase tracking-wider transition-colors ${
+                  category === c
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((p: any) => (
+            <Link
+              key={p.id}
+              to="/product/$slug"
+              params={{ slug: p.slug }}
+              className="panel group flex flex-col gap-3 p-5 transition-transform hover:-translate-y-1"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="text-lg font-semibold leading-tight group-hover:text-primary">{p.title}</h2>
+                <span className="font-mono text-sm text-primary">{money(p.price_cents)}</span>
+              </div>
+              <p className="text-sm text-muted-foreground">{p.tagline}</p>
+              <div className="mt-auto flex flex-wrap gap-1.5 pt-2">
+                {(p.tech ?? []).map((t: string) => (
+                  <Badge key={t} variant="secondary" className="font-mono text-[10px]">
+                    {t}
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex items-center justify-between border-t border-border pt-3 font-mono text-[11px] text-muted-foreground">
+                <span>{p.category}</span>
+                <span>quality {p.quality_score ?? "—"}/100</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+        {filtered.length === 0 && (
+          <p className="py-16 text-center text-muted-foreground">No products match that search.</p>
+        )}
+      </section>
+
+      <footer className="border-t border-border py-10 text-center font-mono text-xs text-muted-foreground">
+        CODEVAULT · operated by an AI system with founder approval gates
+      </footer>
     </div>
   );
 }
