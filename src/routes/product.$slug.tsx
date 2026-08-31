@@ -2,11 +2,8 @@ import { createFileRoute, notFound, useRouter } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getPublicProduct, startCheckout } from "@/lib/marketplace.functions";
-import { useServerFn } from "@tanstack/react-start";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useState } from "react";
+import { getPublicProduct } from "@/lib/marketplace.functions";
+
 
 export const Route = createFileRoute("/product/$slug")({
   loader: async ({ params }) => {
