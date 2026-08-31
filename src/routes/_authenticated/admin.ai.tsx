@@ -40,6 +40,10 @@ function CommandCenter() {
   const setSettings = useServerFn(updateAiSettings);
   const setAgent = useServerFn(toggleAgent);
   const runLoop = useServerFn(runDailyLoop);
+  const loadPayments = useServerFn(paymentQueue);
+  const verifyPayment = useServerFn(verifyPaymentManually);
+  const changePaymentMode = useServerFn(setPaymentMode);
+
 
   const [messages, setMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [input, setInput] = useState("");
