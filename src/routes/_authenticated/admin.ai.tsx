@@ -13,8 +13,39 @@ import { aiChat, decideApproval, runDailyLoop, toggleAgent, updateAiSettings } f
 import { paymentQueue, setPaymentMode, verifyPaymentManually } from "@/lib/payment-queue.functions";
 import { toast } from "sonner";
 
-const money = (cents: number, currency = "USD") =>
+const money = (cents: number, currency = "USDT") =>
   `${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
+
+const activeTabClass =
+  "data-[state=active]:bg-cyan-500 data-[state=active]:text-slate-950 data-[state=active]:font-semibold data-[state=active]:shadow-none";
+
+const QUICK_PROMPTS = [
+  { label: "Audit Pending TxIDs", prompt: "Audit all pending orders with submitted TxIDs. Summarize each order, its buyer, amount, and flag any suspicious patterns." },
+  { label: "Review Product Catalog", prompt: "Review the product catalog: listing readiness, pricing consistency, and which products should be featured or delisted." },
+  { label: "Generate Weekly Report", prompt: "Generate a weekly business report covering revenue, orders, support load, security incidents, and the top 3 recommended actions." },
+];
+
+type ApprovalFilter = "all" | "payments" | "catalog" | "payouts";
+const APPROVAL_FILTERS: { key: ApprovalFilter; label: string; match: (a: any) => boolean }[] = [
+  { key: "all", label: "All", match: () => true },
+  {
+    key: "payments",
+    label: "Payments",
+    match: (a) =>
+      /payment|order|refund|discount|pricing|price/i.test(`${a.tool_name} ${a.title ?? ""} ${a.agent_role ?? ""}`) &&
+      !/payout|seller/i.test(`${a.tool_name} ${a.title ?? ""}`),
+  },
+  {
+    key: "catalog",
+    label: "Catalog",
+    match: (a) => /product|publish|catalog|listing|price/i.test(`${a.tool_name} ${a.title ?? ""} ${a.agent_role ?? ""}`),
+  },
+  {
+    key: "payouts",
+    label: "Payouts",
+    match: (a) => /payout|seller/i.test(`${a.tool_name} ${a.title ?? ""} ${a.agent_role ?? ""}`),
+  },
+];
 
 
 export const Route = createFileRoute("/_authenticated/admin/ai")({
@@ -48,6 +79,7 @@ function CommandCenter() {
   const [messages, setMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
+  const [approvalFilter, setApprovalFilter] = useState<ApprovalFilter>("all");
 
   const settings = useQuery({
     queryKey: ["ai-settings"],
@@ -105,9 +137,9 @@ function CommandCenter() {
   }
 
 
-  async function send() {
-    const text = input.trim();
-    if (!text) return;
+  async function send(prompt?: string) {
+    const text = (prompt ?? input).trim();
+    if (!text || thinking) return;
     const next = [...messages, { role: "user" as const, content: text }];
     setMessages(next);
     setInput("");
@@ -138,11 +170,11 @@ function CommandCenter() {
   return (
     <div className="min-h-screen">
       <SiteHeader />
-      <div className="mx-auto max-w-6xl px-4 py-10">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="font-mono text-xs uppercase tracking-[0.3em] text-primary">AI Operating System</h1>
-            <p className="mt-2 text-3xl font-semibold tracking-tight">Command Center</p>
+      <div className="mx-auto max-w-6xl px-4 py-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-baseline gap-3">
+            <h1 className="font-mono text-[11px] uppercase tracking-[0.3em] text-primary">AI Operating System</h1>
+            <p className="text-2xl font-semibold tracking-tight">Command Center</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <Badge variant={s?.emergency_stop ? "destructive" : s?.paused ? "outline" : "default"}>
@@ -169,10 +201,10 @@ function CommandCenter() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
           {[
-            { label: "Pending payments", value: money(metrics?.pendingCents ?? 0), tone: "text-foreground" },
-            { label: "Verified revenue (today)", value: money(metrics?.verifiedTodayCents ?? 0), tone: "text-primary" },
+            { label: "Pending payments (USDT)", value: money(metrics?.pendingCents ?? 0), tone: "text-foreground" },
+            { label: "Verified revenue today (USDT)", value: money(metrics?.verifiedTodayCents ?? 0), tone: "text-primary" },
             {
               label: "Unresolved TxIDs",
               value: String(metrics?.unresolvedTxids ?? 0),
@@ -186,27 +218,43 @@ function CommandCenter() {
           ))}
         </div>
 
-        <Tabs defaultValue="chat" className="mt-8">
+        <Tabs defaultValue="chat" className="mt-6">
           <TabsList>
-            <TabsTrigger value="chat">AI CEO</TabsTrigger>
-            <TabsTrigger value="payments">
+            <TabsTrigger value="chat" className={activeTabClass}>AI CEO</TabsTrigger>
+            <TabsTrigger value="payments" className={activeTabClass}>
               Payments {awaitingVerification.length > 0 && `(${awaitingVerification.length})`}
             </TabsTrigger>
-            <TabsTrigger value="approvals">Approvals {pending.length > 0 && `(${pending.length})`}</TabsTrigger>
-
-            <TabsTrigger value="agents">Agents</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
-            <TabsTrigger value="controls">Controls</TabsTrigger>
+            <TabsTrigger value="approvals" className={activeTabClass}>
+              Approvals {pending.length > 0 && `(${pending.length})`}
+            </TabsTrigger>
+            <TabsTrigger value="agents" className={activeTabClass}>Agents</TabsTrigger>
+            <TabsTrigger value="activity" className={activeTabClass}>Activity</TabsTrigger>
+            <TabsTrigger value="reports" className={activeTabClass}>Reports</TabsTrigger>
+            <TabsTrigger value="controls" className={activeTabClass}>Controls</TabsTrigger>
           </TabsList>
 
           <TabsContent value="chat" className="panel mt-6 flex flex-col gap-4 p-6">
             <div className="flex max-h-[420px] min-h-[220px] flex-col gap-4 overflow-y-auto">
               {messages.length === 0 && (
-                <p className="font-mono text-sm text-muted-foreground">
-                  Ask for a business review, a growth plan, or a proposal. Level 2 actions become approval requests;
-                  level 3 actions are refused by design.
-                </p>
+                <div className="grid gap-3">
+                  <p className="font-mono text-sm text-muted-foreground">
+                    Quick actions — click to run. Level 2 actions become approval requests; level 3 actions are
+                    refused by design.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {QUICK_PROMPTS.map((q) => (
+                      <button
+                        key={q.label}
+                        type="button"
+                        disabled={thinking}
+                        onClick={() => send(q.prompt)}
+                        className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-4 py-1.5 font-mono text-xs text-cyan-400 transition hover:border-cyan-400 hover:bg-cyan-500/20 hover:text-cyan-300 disabled:opacity-50"
+                      >
+                        {q.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
               {messages.map((m, i) => (
                 <div key={i} className={m.role === "user" ? "text-right" : ""}>
@@ -231,7 +279,7 @@ function CommandCenter() {
                   if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send();
                 }}
               />
-              <Button onClick={send} disabled={thinking}>
+              <Button onClick={() => send()} disabled={thinking}>
                 Send
               </Button>
             </div>
@@ -262,7 +310,7 @@ function CommandCenter() {
                   {[
                     { k: "Buyer", v: o.buyerEmail ?? o.buyerName ?? "unknown" },
                     { k: "Product", v: o.productTitle },
-                    { k: "Expected amount", v: money(o.amountCents, o.currency) },
+                    { k: "Expected amount", v: money(o.amountCents) },
                     { k: "Order reference", v: o.merchantTradeNo ?? o.id },
                   ].map((f) => (
                     <div key={f.k}>
@@ -319,7 +367,25 @@ function CommandCenter() {
 
 
           <TabsContent value="approvals" className="mt-6 grid gap-4">
-            {(approvals.data ?? []).map((a: any) => (
+            <div className="flex flex-wrap gap-2">
+              {APPROVAL_FILTERS.map((f) => (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => setApprovalFilter(f.key)}
+                  className={`rounded-full border px-4 py-1.5 font-mono text-xs transition ${
+                    approvalFilter === f.key
+                      ? "border-cyan-500 bg-cyan-500 font-semibold text-slate-950"
+                      : "border-border bg-muted/30 text-muted-foreground hover:border-cyan-500/50 hover:text-foreground"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            {(approvals.data ?? [])
+              .filter((a: any) => APPROVAL_FILTERS.find((f) => f.key === approvalFilter)?.match(a))
+              .map((a: any) => (
               <div key={a.id} className="panel p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex flex-wrap items-center gap-2">
@@ -373,7 +439,7 @@ function CommandCenter() {
                 )}
               </div>
             ))}
-            {(approvals.data ?? []).length === 0 && (
+            {(approvals.data ?? []).filter((a: any) => APPROVAL_FILTERS.find((f) => f.key === approvalFilter)?.match(a)).length === 0 && (
               <p className="panel p-8 text-center text-muted-foreground">No proposals yet.</p>
             )}
           </TabsContent>
