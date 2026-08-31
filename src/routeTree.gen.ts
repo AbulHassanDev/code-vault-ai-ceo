@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 import { Route as AuthenticatedAdminAiRouteImport } from './routes/_authenticated/admin.ai'
+import { Route as ApiPublicWebhooksBinancePayRouteImport } from './routes/api/public/webhooks/binance-pay'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -45,6 +46,12 @@ const AuthenticatedAdminAiRoute = AuthenticatedAdminAiRouteImport.update({
   path: '/admin/ai',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicWebhooksBinancePayRoute =
+  ApiPublicWebhooksBinancePayRouteImport.update({
+    id: '/api/public/webhooks/binance-pay',
+    path: '/api/public/webhooks/binance-pay',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -52,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/library': typeof AuthenticatedLibraryRoute
   '/product/$slug': typeof ProductSlugRoute
   '/admin/ai': typeof AuthenticatedAdminAiRoute
+  '/api/public/webhooks/binance-pay': typeof ApiPublicWebhooksBinancePayRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -59,6 +67,7 @@ export interface FileRoutesByTo {
   '/library': typeof AuthenticatedLibraryRoute
   '/product/$slug': typeof ProductSlugRoute
   '/admin/ai': typeof AuthenticatedAdminAiRoute
+  '/api/public/webhooks/binance-pay': typeof ApiPublicWebhooksBinancePayRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -68,12 +77,25 @@ export interface FileRoutesById {
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
   '/product/$slug': typeof ProductSlugRoute
   '/_authenticated/admin/ai': typeof AuthenticatedAdminAiRoute
+  '/api/public/webhooks/binance-pay': typeof ApiPublicWebhooksBinancePayRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/library' | '/product/$slug' | '/admin/ai'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/library'
+    | '/product/$slug'
+    | '/admin/ai'
+    | '/api/public/webhooks/binance-pay'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/library' | '/product/$slug' | '/admin/ai'
+  to:
+    | '/'
+    | '/auth'
+    | '/library'
+    | '/product/$slug'
+    | '/admin/ai'
+    | '/api/public/webhooks/binance-pay'
   id:
     | '__root__'
     | '/'
@@ -82,6 +104,7 @@ export interface FileRouteTypes {
     | '/_authenticated/library'
     | '/product/$slug'
     | '/_authenticated/admin/ai'
+    | '/api/public/webhooks/binance-pay'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -89,6 +112,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ProductSlugRoute: typeof ProductSlugRoute
+  ApiPublicWebhooksBinancePayRoute: typeof ApiPublicWebhooksBinancePayRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -135,6 +159,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAiRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/webhooks/binance-pay': {
+      id: '/api/public/webhooks/binance-pay'
+      path: '/api/public/webhooks/binance-pay'
+      fullPath: '/api/public/webhooks/binance-pay'
+      preLoaderRoute: typeof ApiPublicWebhooksBinancePayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -156,6 +187,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ProductSlugRoute: ProductSlugRoute,
+  ApiPublicWebhooksBinancePayRoute: ApiPublicWebhooksBinancePayRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -55,6 +55,9 @@ export const startCheckout = createServerFn({ method: "POST" })
       .maybeSingle();
     if (pErr || !product) return { ok: false, message: "Product not available." };
 
+    const merchantTradeNo = `CV${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+    const paymentsConfigured = Boolean(process.env["BINANCE_PAY_PUBLIC_CERT"]);
+
     const { data: order, error } = await supabase
       .from("orders")
       .insert({
@@ -62,9 +65,10 @@ export const startCheckout = createServerFn({ method: "POST" })
         product_id: product.id,
         amount_cents: product.price_cents,
         status: "pending",
-        provider: "unconfigured",
+        provider: paymentsConfigured ? "binance_pay" : "unconfigured",
+        merchant_trade_no: merchantTradeNo,
       })
-      .select("id,status,amount_cents")
+      .select("id,status,amount_cents,merchant_trade_no")
       .single();
     if (error) return { ok: false, message: error.message };
 
@@ -76,10 +80,13 @@ export const startCheckout = createServerFn({ method: "POST" })
     return {
       ok: true,
       orderId: order.id as string,
-      message:
-        "Order created and waiting for payment. No payment provider is connected yet, so ownership stays unverified — the AI will never mark it paid on its own.",
+      merchantTradeNo,
+      message: paymentsConfigured
+        ? `Order ${merchantTradeNo} created. Ownership unlocks only after Binance Pay confirms the payment against a verified signature.`
+        : "Order created and waiting for payment. Binance Pay is not connected yet, so ownership stays unverified — the AI can never mark it paid.",
     };
   });
+
 
 /** Verified buyers only. Logs every attempt so the operations agent can see failures. */
 export const requestDownload = createServerFn({ method: "POST" })
