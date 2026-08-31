@@ -169,10 +169,31 @@ function CommandCenter() {
           </div>
         </div>
 
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          {[
+            { label: "Pending payments", value: money(metrics?.pendingCents ?? 0), tone: "text-foreground" },
+            { label: "Verified revenue (today)", value: money(metrics?.verifiedTodayCents ?? 0), tone: "text-primary" },
+            {
+              label: "Unresolved TxIDs",
+              value: String(metrics?.unresolvedTxids ?? 0),
+              tone: (metrics?.unresolvedTxids ?? 0) > 0 ? "text-destructive" : "text-foreground",
+            },
+          ].map((m) => (
+            <div key={m.label} className="panel p-5">
+              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">{m.label}</p>
+              <p className={`mt-2 text-2xl font-semibold tracking-tight ${m.tone}`}>{m.value}</p>
+            </div>
+          ))}
+        </div>
+
         <Tabs defaultValue="chat" className="mt-8">
           <TabsList>
             <TabsTrigger value="chat">AI CEO</TabsTrigger>
+            <TabsTrigger value="payments">
+              Payments {awaitingVerification.length > 0 && `(${awaitingVerification.length})`}
+            </TabsTrigger>
             <TabsTrigger value="approvals">Approvals {pending.length > 0 && `(${pending.length})`}</TabsTrigger>
+
             <TabsTrigger value="agents">Agents</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
