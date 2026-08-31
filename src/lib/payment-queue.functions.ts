@@ -54,8 +54,9 @@ export const paymentQueue = createServerFn({ method: "GET" })
         createdAt: o.created_at as string,
         productTitle: o.products?.title ?? "Unknown product",
         productSlug: o.products?.slug ?? null,
-        buyerEmail: o.profiles?.email ?? null,
-        buyerName: o.profiles?.display_name ?? null,
+        buyerEmail: byUser.get(o.user_id)?.email ?? null,
+        buyerName: byUser.get(o.user_id)?.display_name ?? null,
+
       })),
       metrics: { pendingCents, verifiedTodayCents, unresolvedTxids },
     };
