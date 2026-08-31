@@ -237,6 +237,87 @@ function CommandCenter() {
             </div>
           </TabsContent>
 
+          <TabsContent value="payments" className="mt-6 grid gap-4">
+            <p className="font-mono text-xs text-muted-foreground">
+              Manual Binance Pay verification queue. Only you can release funds-backed access — the AI has no tool that
+              can mark an order paid.
+            </p>
+            {paymentOrders.map((o) => (
+              <div key={o.id} className="panel p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant={o.status === "paid" ? "default" : o.status === "failed" ? "destructive" : "outline"}>
+                      {o.status}
+                    </Badge>
+                    <span className="font-mono text-xs text-muted-foreground">
+                      {o.merchantTradeNo ?? o.id.slice(0, 8)}
+                    </span>
+                  </div>
+                  <span className="font-mono text-xs text-muted-foreground">
+                    {new Date(o.createdAt).toLocaleString()}
+                  </span>
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {[
+                    { k: "Buyer", v: o.buyerEmail ?? o.buyerName ?? "unknown" },
+                    { k: "Product", v: o.productTitle },
+                    { k: "Expected amount", v: money(o.amountCents, o.currency) },
+                    { k: "Order reference", v: o.merchantTradeNo ?? o.id },
+                  ].map((f) => (
+                    <div key={f.k}>
+                      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">{f.k}</p>
+                      <p className="mt-1 break-all text-sm">{f.v}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 rounded-md border border-border bg-muted/30 p-3">
+                  <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                    Buyer-submitted Binance TxID
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <code className="break-all font-mono text-sm">{o.buyerTxid ?? "— not submitted yet —"}</code>
+                    {o.buyerTxid && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          navigator.clipboard.writeText(o.buyerTxid!);
+                          toast.success("TxID copied.");
+                        }}
+                      >
+                        Copy
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {o.verificationNote && (
+                  <p className="mt-3 font-mono text-xs text-muted-foreground">Note: {o.verificationNote}</p>
+                )}
+
+                {o.status !== "paid" && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button size="sm" disabled={!o.buyerTxid} onClick={() => decidePayment(o.id, "approve")}>
+                      Approve payment (mark paid & release download)
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => decidePayment(o.id, "flag")}>
+                      Flag invalid TxID
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => decidePayment(o.id, "reject")}>
+                      Reject order
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+            {paymentOrders.length === 0 && (
+              <p className="panel p-8 text-center text-muted-foreground">No orders yet.</p>
+            )}
+          </TabsContent>
+
+
           <TabsContent value="approvals" className="mt-6 grid gap-4">
             {(approvals.data ?? []).map((a: any) => (
               <div key={a.id} className="panel p-5">
