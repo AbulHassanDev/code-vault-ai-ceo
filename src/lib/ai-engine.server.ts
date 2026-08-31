@@ -72,7 +72,7 @@ export async function executeTool(
   if (def.permission !== "LEVEL_3" && def.handler) {
     const settings = await loadSettings(ctx.supabase);
     const halted = settings.emergency_stop || !settings.ai_enabled || settings.paused;
-    const mutating = def.risk !== "low" || !toolName.startsWith("get_");
+    const mutating = !/^(get_|list_|search_|check_|audit_)/.test(toolName);
     if (halted && mutating) {
       await logActivity(ctx.supabase, {
         agent_key: ctx.agentKey,
