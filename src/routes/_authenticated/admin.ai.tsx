@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/admin/ai")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: CommandCenter;
+  component: CommandCenter,
 });
 
 const RISK: Record<string, string> = { low: "secondary", medium: "outline", high: "destructive" };
