@@ -37,25 +37,11 @@ export const Route = createFileRoute("/product/$slug")({
 function ProductPage() {
   const product = Route.useLoaderData() as any;
   const router = useRouter();
-  const checkout = useServerFn(startCheckout);
-  const [busy, setBusy] = useState(false);
 
-  async function buy() {
-    setBusy(true);
-    try {
-      const { data } = await supabase.auth.getUser();
-      if (!data.user) {
-        router.navigate({ to: "/auth" });
-        return;
-      }
-      const result = await checkout({ data: { productId: product.id } });
-      result.ok ? toast.success(result.message) : toast.error(result.message);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Checkout failed");
-    } finally {
-      setBusy(false);
-    }
+  function buy() {
+    router.navigate({ to: "/checkout", search: { slug: product.slug } });
   }
+
 
   return (
     <div className="min-h-screen">
