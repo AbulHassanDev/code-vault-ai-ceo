@@ -332,6 +332,24 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_job_locks: {
+        Row: {
+          key: string
+          leased_until: string
+          updated_at: string
+        }
+        Insert: {
+          key: string
+          leased_until: string
+          updated_at?: string
+        }
+        Update: {
+          key?: string
+          leased_until?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_knowledge_documents: {
         Row: {
           body: string
