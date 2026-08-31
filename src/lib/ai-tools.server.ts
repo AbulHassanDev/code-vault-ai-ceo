@@ -256,7 +256,9 @@ const readTools: ToolDefinition[] = [
       const { data } = await q;
       return data ?? [];
     },
+  },
   {
+
     name: "get_payment_verification_log",
     description:
       "Read the Binance Pay callback log: signature validity, amount match and fulfilment outcome per order. Use this before making any claim about whether a payment is real.",
