@@ -204,10 +204,10 @@ function VaultDoor({ p, dark, compact }: { p: Palette; dark: boolean; compact: b
 
       {/* Glowing core seen through the glass */}
       <mesh ref={core} position={[0, 0, 0.34]}>
-        <sphereGeometry args={[0.2, 24, 24]} />
+        <sphereGeometry args={[0.17, 24, 24]} />
         <meshStandardMaterial color={p.neon} emissive={p.neon} emissiveIntensity={2.2} toneMapped={false} />
       </mesh>
-      <pointLight position={[0, 0, 0.9]} color={p.neon} intensity={dark ? 6 : 3} distance={4} />
+      <pointLight position={[0, 0, 1.1]} color={p.neon} intensity={dark ? 2.5 : 1.5} distance={3} />
 
       {/* Pulse-glow ring emitted from the core */}
       <mesh ref={pulse} position={[0, 0, 0.36]}>
@@ -221,15 +221,14 @@ function VaultDoor({ p, dark, compact }: { p: Palette; dark: boolean; compact: b
           <cylinderGeometry args={[1.44, 1.44, 0.05, 64]} />
           <meshPhysicalMaterial
             color={p.glass}
-            transmission={0.95}
-            thickness={0.05}
             ior={1.5}
-            roughness={0}
+            roughness={0.02}
             metalness={0}
             clearcoat={1}
-            clearcoatRoughness={0.05}
+            clearcoatRoughness={0.03}
+            reflectivity={0.9}
             transparent
-            opacity={0.22}
+            opacity={0.16}
             side={THREE.DoubleSide}
           />
         </mesh>
