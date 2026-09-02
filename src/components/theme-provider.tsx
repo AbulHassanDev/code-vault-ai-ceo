@@ -22,7 +22,7 @@ const ThemeContext = createContext<ThemeContextValue>({
 function applyTheme(theme: Theme) {
   const root = document.documentElement;
   root.classList.toggle("dark", theme === "dark");
-  root.dataset.theme = theme;
+  root.dataset['theme'] = theme;
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
