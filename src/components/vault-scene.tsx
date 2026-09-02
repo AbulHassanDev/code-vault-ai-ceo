@@ -218,18 +218,18 @@ function VaultDoor({ p, dark, compact }: { p: Palette; dark: boolean; compact: b
       {/* Refractive glass overlay (desktop only — transmission is GPU heavy) */}
       {!compact && (
         <mesh position={[0, 0, 0.5]} rotation-x={Math.PI / 2}>
-          <cylinderGeometry args={[1.5, 1.5, 0.08, 64]} />
+          <cylinderGeometry args={[1.44, 1.44, 0.05, 64]} />
           <meshPhysicalMaterial
             color={p.glass}
-            transmission={0.9}
-            thickness={0.25}
+            transmission={0.95}
+            thickness={0.05}
             ior={1.5}
-            roughness={0.06}
+            roughness={0}
             metalness={0}
             clearcoat={1}
             clearcoatRoughness={0.05}
             transparent
-            opacity={0.35}
+            opacity={0.22}
             side={THREE.DoubleSide}
           />
         </mesh>
