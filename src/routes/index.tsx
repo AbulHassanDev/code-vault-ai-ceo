@@ -90,7 +90,7 @@ function Marketplace() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search stacks, e.g. Next.js"
-            className="h-10 w-64 rounded-md border border-input bg-card px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+            className="h-10 w-64 rounded-lg border border-input bg-card/60 px-3 text-sm backdrop-blur-md outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-ring/40"
           />
           <div className="flex flex-wrap gap-2">
             {categories.map((c) => (
@@ -115,7 +115,7 @@ function Marketplace() {
               key={p.id}
               to="/product/$slug"
               params={{ slug: p.slug }}
-              className="panel group flex flex-col gap-3 p-5 transition-transform hover:-translate-y-1"
+              className="panel card-hover group flex flex-col gap-3 p-5"
             >
               <div className="flex items-start justify-between gap-3">
                 <h2 className="text-lg font-semibold leading-tight group-hover:text-primary">{p.title}</h2>
@@ -141,7 +141,7 @@ function Marketplace() {
         )}
       </section>
 
-      <footer className="border-t border-border py-10 text-center font-mono text-xs text-muted-foreground">
+      <footer className="border-t border-border/60 py-14 text-center font-mono text-xs text-muted-foreground">
         CODEVAULT · operated by an AI system with founder approval gates
       </footer>
     </div>
