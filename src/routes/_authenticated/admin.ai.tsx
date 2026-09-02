@@ -14,6 +14,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { aiChat, decideApproval, runDailyLoop, toggleAgent, updateAiSettings } from "@/lib/ai.functions";
 import { paymentQueue, setPaymentMode, verifyPaymentManually } from "@/lib/payment-queue.functions";
 import { toast } from "sonner";
+import {
+  BarChart3,
+  FileText,
+  RefreshCw,
+  ScanSearch,
+  ShieldAlert,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 
 const money = (cents: number, currency = "USDT") =>
   `${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
@@ -21,11 +30,80 @@ const money = (cents: number, currency = "USDT") =>
 const activeTabClass =
   "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-semibold data-[state=active]:shadow-none";
 
+/** Compact 7-point trend sparkline for the executive metric cards. */
+function Sparkline({ values }: { values: number[] }) {
+  if (!values || values.length < 2 || values.every((v) => v === 0)) return null;
+  const max = Math.max(...values, 1);
+  const points = values
+    .map((v, i) => `${(i / (values.length - 1)) * 68},${20 - (v / max) * 18}`)
+    .join(" ");
+  return (
+    <svg viewBox="0 0 68 20" className="h-6 w-[68px] shrink-0 text-primary" aria-hidden>
+      <polyline points={points} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Execution/confidence pills derived from the CEO's structured proposal block. */
+function MessagePills({ content }: { content: string }) {
+  const match = content.match(/```json\s*([\s\S]*?)```/);
+  let parsed: any = null;
+  if (match?.[1]) {
+    try {
+      parsed = JSON.parse(match[1]);
+    } catch {
+      parsed = null;
+    }
+  }
+  const pills: { label: string; tone: string }[] = [];
+  if (parsed?.agent_role) pills.push({ label: parsed.agent_role, tone: "border-primary/40 bg-primary/10 text-primary" });
+  if (parsed?.risk_level)
+    pills.push({
+      label: `${parsed.risk_level} risk`,
+      tone:
+        parsed.risk_level === "high" || parsed.risk_level === "critical"
+          ? "border-destructive/40 bg-destructive/10 text-destructive"
+          : "border-amber-500/40 bg-amber-500/10 text-amber-500",
+    });
+  if (parsed?.approval_id)
+    pills.push({ label: "Approval created", tone: "border-amber-500/40 bg-amber-500/10 text-amber-500" });
+  else if (parsed)
+    pills.push({ label: "Level 2 proposal", tone: "border-amber-500/40 bg-amber-500/10 text-amber-500" });
+  if (/executed|verified|updated|saved/i.test(content) && !parsed)
+    pills.push({ label: "Level 1 executed", tone: "border-emerald-500/40 bg-emerald-500/10 text-emerald-500" });
+  if (pills.length === 0) return null;
+  return (
+    <div className="mt-1.5 flex flex-wrap gap-1.5">
+      {pills.map((p) => (
+        <span key={p.label} className={`rounded-full border px-2 py-0.5 font-mono text-[10px] ${p.tone}`}>
+          {p.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 const QUICK_PROMPTS = [
-  { label: "Audit Pending TxIDs", prompt: "Audit all pending orders with submitted TxIDs. Summarize each order, its buyer, amount, and flag any suspicious patterns." },
-  { label: "Review Product Catalog", prompt: "Review the product catalog: listing readiness, pricing consistency, and which products should be featured or delisted." },
-  { label: "Generate Weekly Report", prompt: "Generate a weekly business report covering revenue, orders, support load, security incidents, and the top 3 recommended actions." },
+  {
+    label: "Audit Pending TxIDs",
+    level: "Level 1 · Finance",
+    icon: ScanSearch,
+    prompt: "Audit all pending orders with submitted TxIDs. Summarize each order, its buyer, amount, and flag any suspicious patterns.",
+  },
+  {
+    label: "Review Product Catalog",
+    level: "Level 1 · Marketplace",
+    icon: BarChart3,
+    prompt: "Review the product catalog: listing readiness, pricing consistency, and which products should be featured or delisted.",
+  },
+  {
+    label: "Generate Weekly Report",
+    level: "Level 1 · Growth",
+    icon: FileText,
+    prompt: "Generate a weekly business report covering revenue, orders, support load, security incidents, and the top 3 recommended actions.",
+  },
 ];
+
 
 type ApprovalFilter = "all" | "payments" | "catalog" | "payouts";
 const APPROVAL_FILTERS: { key: ApprovalFilter; label: string; match: (a: any) => boolean }[] = [
