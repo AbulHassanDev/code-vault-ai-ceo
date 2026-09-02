@@ -4,6 +4,9 @@ import { SiteHeader } from "@/components/site-header";
 import { HeroVault } from "@/components/hero-vault";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { Search } from "lucide-react";
+import { ProductCard } from "@/components/product-card";
+import { CATEGORY_TABS, SORT_OPTIONS, type SortValue } from "@/lib/product-meta";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { listPublicProducts } from "@/lib/marketplace.functions";
