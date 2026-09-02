@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { SiteHeader } from "@/components/site-header";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { listPublicProducts } from "@/lib/marketplace.functions";
@@ -43,6 +44,14 @@ function Marketplace() {
   const { data: products } = useSuspenseQuery(productsQuery);
   const [category, setCategory] = useState<string>("all");
   const [query, setQuery] = useState("");
+
+  const [filtering, setFiltering] = useState(false);
+
+  useEffect(() => {
+    setFiltering(true);
+    const t = setTimeout(() => setFiltering(false), 220);
+    return () => clearTimeout(t);
+  }, [category, query]);
 
   const categories = ["all", ...Array.from(new Set(products.map((p: any) => p.category)))];
   const filtered = products.filter(
@@ -110,7 +119,17 @@ function Marketplace() {
         </div>
 
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((p: any) => (
+          {filtering &&
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={`skeleton-${i}`} className="panel flex flex-col gap-3 p-5">
+                <Skeleton className="h-5 w-2/3" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="mt-3 h-8 w-full" />
+              </div>
+            ))}
+          {!filtering &&
+            filtered.map((p: any) => (
             <Link
               key={p.id}
               to="/product/$slug"
@@ -136,7 +155,7 @@ function Marketplace() {
             </Link>
           ))}
         </div>
-        {filtered.length === 0 && (
+        {!filtering && filtered.length === 0 && (
           <p className="py-16 text-center text-muted-foreground">No products match that search.</p>
         )}
       </section>

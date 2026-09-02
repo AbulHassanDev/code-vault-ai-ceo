@@ -5,6 +5,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -283,7 +284,14 @@ function CommandCenter() {
                 }}
               />
               <Button onClick={() => send()} disabled={thinking}>
-                Send
+                {thinking ? (
+                  <>
+                    <Spinner className="mr-2" />
+                    Running
+                  </>
+                ) : (
+                  "Send"
+                )}
               </Button>
             </div>
           </TabsContent>
