@@ -614,6 +614,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          ai_verification: Json | null
           amount_cents: number
           buyer_txid: string | null
           created_at: string
@@ -622,9 +623,11 @@ export type Database = {
           id: string
           merchant_trade_no: string | null
           product_id: string
+          proof_path: string | null
           provider: string
           provider_ref: string | null
           provider_tx_id: string | null
+          review_reason: string | null
           status: string
           updated_at: string
           user_id: string
@@ -633,6 +636,7 @@ export type Database = {
           verified_by: string | null
         }
         Insert: {
+          ai_verification?: Json | null
           amount_cents: number
           buyer_txid?: string | null
           created_at?: string
@@ -641,9 +645,11 @@ export type Database = {
           id?: string
           merchant_trade_no?: string | null
           product_id: string
+          proof_path?: string | null
           provider?: string
           provider_ref?: string | null
           provider_tx_id?: string | null
+          review_reason?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -652,6 +658,7 @@ export type Database = {
           verified_by?: string | null
         }
         Update: {
+          ai_verification?: Json | null
           amount_cents?: number
           buyer_txid?: string | null
           created_at?: string
@@ -660,9 +667,11 @@ export type Database = {
           id?: string
           merchant_trade_no?: string | null
           product_id?: string
+          proof_path?: string | null
           provider?: string
           provider_ref?: string | null
           provider_tx_id?: string | null
+          review_reason?: string | null
           status?: string
           updated_at?: string
           user_id?: string
