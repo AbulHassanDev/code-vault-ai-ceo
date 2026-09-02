@@ -158,8 +158,8 @@ function VaultDoor({ p, dark, compact }: { p: Palette; dark: boolean; compact: b
       onPointerOut={() => setHovered(false)}
     >
       {/* Outer frame */}
-      <mesh castShadow receiveShadow rotation-x={Math.PI / 2} position={[0, 0, -0.05]}>
-        <torusGeometry args={[1.72, 0.17, 20, 72]} rotation-x={Math.PI / 2} />
+      <mesh castShadow receiveShadow position={[0, 0, -0.05]}>
+        <torusGeometry args={[1.72, 0.17, 20, 72]} />
         <meshStandardMaterial color={p.steelDark} {...steelProps} />
       </mesh>
 
