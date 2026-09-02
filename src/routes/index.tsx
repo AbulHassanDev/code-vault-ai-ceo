@@ -124,8 +124,21 @@ function Marketplace() {
         </div>
       </section>
 
+      <IndustryGrid counts={counts} />
 
       <section id="catalog" className="mx-auto max-w-6xl px-4 py-14">
+        {activeIndustry && (
+          <div className="mb-6 flex flex-wrap items-center gap-3">
+            <span className="text-sm text-muted-foreground">Filtered by industry:</span>
+            <button
+              onClick={() => navigate({ to: "/", search: {} })}
+              className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-sm text-primary transition-colors hover:bg-primary/20"
+            >
+              {activeIndustry.label}
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
         <div className="mb-6 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
           <div className="relative min-w-0">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
