@@ -74,7 +74,7 @@ function Stepper({ current }: { current: number }) {
 function CopyField({ label, value, mono = true }: { label: string; value: string; mono?: boolean }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2.5">
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card/60 px-3 py-2.5 backdrop-blur-md">
       <div className="min-w-0">
         <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
         <div className={`truncate text-sm ${mono ? "font-mono text-primary" : ""}`}>{value}</div>
@@ -317,7 +317,7 @@ function CheckoutPage() {
                   Current orders are manually verified by our team/AI Ops within minutes.
                 </div>
 
-                <ol className="space-y-2 rounded-md border border-border bg-card p-4 text-sm text-muted-foreground">
+                <ol className="space-y-2 rounded-lg border border-border bg-card/60 p-4 backdrop-blur-md text-sm text-muted-foreground">
                   <li><span className="font-mono text-primary">1.</span> Transfer USDT using the Binance Pay ID / QR code.</li>
                   <li><span className="font-mono text-primary">2.</span> Submit your Binance Transaction ID (TxID).</li>
                   <li><span className="font-mono text-primary">3.</span> Approval queue verifies the TxID → your 5-minute download link unlocks in your library.</li>
@@ -350,7 +350,7 @@ function CheckoutPage() {
                   </div>
                 </div>
 
-                <ol className="space-y-2 rounded-md border border-border bg-card p-4 text-sm text-muted-foreground">
+                <ol className="space-y-2 rounded-lg border border-border bg-card/60 p-4 backdrop-blur-md text-sm text-muted-foreground">
                   <li><span className="font-mono text-primary">1.</span> Scan the QR or copy the Pay ID in your Binance app.</li>
                   <li><span className="font-mono text-primary">2.</span> Send exactly <span className="font-mono text-foreground">{priceUsdt} USDT</span> and include the order reference in the note.</li>
                   <li><span className="font-mono text-primary">3.</span> Copy the Transaction ID / TxID from your Binance payment history.</li>

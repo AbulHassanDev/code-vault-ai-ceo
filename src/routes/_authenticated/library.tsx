@@ -69,7 +69,7 @@ function LibraryPage() {
           {(data?.orders ?? []).map((o: any) => (
             <div
               key={o.id}
-              className="flex items-center justify-between rounded-md border border-border bg-card px-4 py-3 text-sm"
+              className="flex items-center justify-between rounded-lg border border-border bg-card/60 px-4 py-3 backdrop-blur-md text-sm"
             >
               <span>{o.products?.title ?? "Order"}</span>
               <span className="flex items-center gap-3 font-mono text-xs text-muted-foreground">
