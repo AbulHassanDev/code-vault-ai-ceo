@@ -27,12 +27,21 @@ export function ProofDropzone({
   const [uploading, setUploading] = useState(false);
 
   async function handleFile(file: File) {
-    if (!ACCEPT.includes(file.type)) return toast.error("Use a PNG, JPG or PDF file.");
-    if (file.size > MAX_BYTES) return toast.error("File is larger than 5MB.");
+    if (!ACCEPT.includes(file.type)) {
+      toast.error("Use a PNG, JPG or PDF file.");
+      return;
+    }
+    if (file.size > MAX_BYTES) {
+      toast.error("File is larger than 5MB.");
+      return;
+    }
 
     const { data: auth } = await supabase.auth.getUser();
     const uid = auth.user?.id;
-    if (!uid) return toast.error("Sign in again to upload your proof.");
+    if (!uid) {
+      toast.error("Sign in again to upload your proof.");
+      return;
+    }
 
     setUploading(true);
     setProgress(12);
