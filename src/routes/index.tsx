@@ -4,6 +4,9 @@ import { SiteHeader } from "@/components/site-header";
 import { HeroVault } from "@/components/hero-vault";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { Search } from "lucide-react";
+import { ProductCard } from "@/components/product-card";
+import { CATEGORY_TABS, SORT_OPTIONS, type SortValue } from "@/lib/product-meta";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { listPublicProducts } from "@/lib/marketplace.functions";
@@ -40,12 +43,11 @@ export const Route = createFileRoute("/")({
   component: Marketplace,
 });
 
-const money = (cents: number) => `$${(cents / 100).toFixed(0)}`;
-
 function Marketplace() {
   const { data: products } = useSuspenseQuery(productsQuery);
   const [category, setCategory] = useState<string>("all");
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<SortValue>("quality");
 
   const [filtering, setFiltering] = useState(false);
 
@@ -53,14 +55,27 @@ function Marketplace() {
     setFiltering(true);
     const t = setTimeout(() => setFiltering(false), 220);
     return () => clearTimeout(t);
-  }, [category, query]);
+  }, [category, query, sort]);
 
-  const categories = ["all", ...Array.from(new Set(products.map((p: any) => p.category)))];
-  const filtered = products.filter(
-    (p: any) =>
-      (category === "all" || p.category === category) &&
-      (query === "" || `${p.title} ${p.tagline} ${p.tech?.join(" ")}`.toLowerCase().includes(query.toLowerCase())),
+  const categories = Array.from(
+    new Set<string>([...CATEGORY_TABS, ...products.map((p: any) => String(p.category))]),
   );
+  const q = query.trim().toLowerCase();
+  const filtered = products
+    .filter(
+      (p: any) =>
+        (category === "all" || p.category === category) &&
+        (q === "" ||
+          `${p.title} ${p.tagline ?? ""} ${p.description ?? ""} ${(p.tech ?? []).join(" ")} ${(p.tags ?? []).join(" ")}`
+            .toLowerCase()
+            .includes(q)),
+    )
+    .sort((a: any, b: any) => {
+      if (sort === "price-asc") return a.price_cents - b.price_cents;
+      if (sort === "price-desc") return b.price_cents - a.price_cents;
+      if (sort === "recent") return String(b.created_at ?? "").localeCompare(String(a.created_at ?? ""));
+      return (b.quality_score ?? 0) - (a.quality_score ?? 0);
+    });
 
   return (
     <div className="min-h-screen">
@@ -102,66 +117,57 @@ function Marketplace() {
 
 
       <section id="catalog" className="mx-auto max-w-6xl px-4 py-14">
-        <div className="mb-8 flex flex-wrap items-center gap-3">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search stacks, e.g. Next.js"
-            className="h-10 w-64 rounded-lg border border-input bg-card/60 px-3 text-sm backdrop-blur-md outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-ring/40"
-          />
-          <div className="flex flex-wrap gap-2">
-            {categories.map((c) => (
-              <button
-                key={c}
-                onClick={() => setCategory(c)}
-                className={`rounded-full border px-3 py-1 font-mono text-xs uppercase tracking-wider transition-colors ${
-                  category === c
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {c}
-              </button>
-            ))}
+        <div className="mb-6 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+          <div className="relative min-w-0">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search titles, stacks or descriptions…"
+              className="h-10 w-full rounded-lg border border-input bg-card/60 pl-9 pr-3 text-sm backdrop-blur-md outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-ring/40"
+            />
           </div>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortValue)}
+            className="h-10 rounded-lg border border-input bg-card/60 px-3 text-sm backdrop-blur-md outline-none transition-colors focus:border-primary/50"
+            aria-label="Sort products"
+          >
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mb-8 flex flex-wrap gap-2">
+          {categories.map((c) => (
+            <button
+              key={c}
+              onClick={() => setCategory(c)}
+              className={`rounded-full border px-3 py-1 font-mono text-xs uppercase tracking-wider transition-all ${
+                category === c
+                  ? "border-primary bg-primary text-primary-foreground shadow-glow"
+                  : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
+              }`}
+            >
+              {c}
+            </button>
+          ))}
         </div>
 
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {filtering &&
             Array.from({ length: 3 }).map((_, i) => (
               <div key={`skeleton-${i}`} className="panel flex flex-col gap-3 p-5">
+                <Skeleton className="h-28 w-full" />
                 <Skeleton className="h-5 w-2/3" />
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-1/2" />
-                <Skeleton className="mt-3 h-8 w-full" />
               </div>
             ))}
-          {!filtering &&
-            filtered.map((p: any) => (
-            <Link
-              key={p.id}
-              to="/product/$slug"
-              params={{ slug: p.slug }}
-              className="panel card-hover group flex flex-col gap-3 p-5"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <h2 className="text-lg font-semibold leading-tight group-hover:text-primary">{p.title}</h2>
-                <span className="font-mono text-sm text-primary">{money(p.price_cents)}</span>
-              </div>
-              <p className="text-sm text-muted-foreground">{p.tagline}</p>
-              <div className="mt-auto flex flex-wrap gap-1.5 pt-2">
-                {(p.tech ?? []).map((t: string) => (
-                  <Badge key={t} variant="secondary" className="font-mono text-[10px]">
-                    {t}
-                  </Badge>
-                ))}
-              </div>
-              <div className="flex items-center justify-between border-t border-border pt-3 font-mono text-[11px] text-muted-foreground">
-                <span>{p.category}</span>
-                <span>quality {p.quality_score ?? "—"}/100</span>
-              </div>
-            </Link>
-          ))}
+          {!filtering && filtered.map((p: any) => <ProductCard key={p.id} p={p} />)}
         </div>
         {!filtering && filtered.length === 0 && (
           <p className="py-16 text-center text-muted-foreground">No products match that search.</p>
