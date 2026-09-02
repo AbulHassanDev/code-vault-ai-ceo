@@ -217,19 +217,19 @@ function VaultDoor({ p, dark, compact }: { p: Palette; dark: boolean; compact: b
 
       {/* Refractive glass overlay (desktop only — transmission is GPU heavy) */}
       {!compact && (
-        <mesh position={[0, 0, 0.44]}>
-          <sphereGeometry args={[1.5, 40, 40, 0, Math.PI * 2, 0, Math.PI / 2.6]} />
+        <mesh position={[0, 0, 0.5]} rotation-x={Math.PI / 2}>
+          <cylinderGeometry args={[1.5, 1.5, 0.08, 64]} />
           <meshPhysicalMaterial
             color={p.glass}
             transmission={0.9}
-            thickness={0.6}
+            thickness={0.25}
             ior={1.5}
             roughness={0.06}
             metalness={0}
             clearcoat={1}
             clearcoatRoughness={0.05}
             transparent
-            opacity={0.9}
+            opacity={0.35}
             side={THREE.DoubleSide}
           />
         </mesh>
@@ -245,7 +245,7 @@ export default function VaultScene() {
   const nodeCount = compact ? 8 : 20;
 
   const p: Palette = dark
-    ? { steel: "#3a4152", steelDark: "#1b2130", neon: "#818cf8", rim: "#8b5cf6", glass: "#c7d2fe" }
+    ? { steel: "#59627a", steelDark: "#232a3b", neon: "#818cf8", rim: "#8b5cf6", glass: "#c7d2fe" }
     : { steel: "#c3cad8", steelDark: "#8e98ac", neon: "#4f46e5", rim: "#7c3aed", glass: "#ffffff" };
 
   return (
