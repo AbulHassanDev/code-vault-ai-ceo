@@ -13,7 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Check, Copy, Clock, ShieldCheck, ArrowRight } from "lucide-react";
+import { Check, Copy, Clock, ShieldCheck, ArrowRight, Sparkles } from "lucide-react";
+import { ProofDropzone, type UploadedProof } from "@/components/proof-dropzone";
 
 const BINANCE_PAY_ID = "530019824";
 
@@ -111,6 +112,8 @@ function CheckoutPage() {
   const [order, setOrder] = useState<{ id: string; merchantTradeNo: string } | null>(null);
   const [txid, setTxid] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [proof, setProof] = useState<UploadedProof | null>(null);
+  const [autoVerified, setAutoVerified] = useState(false);
 
   const priceUsdt = product ? (product.price_cents / 100).toFixed(0) : "0";
 
@@ -148,10 +151,11 @@ function CheckoutPage() {
     if (!order) return;
     setBusy(true);
     try {
-      const result = await submitProof({ data: { orderId: order.id, txid } });
+      const result = await submitProof({ data: { orderId: order.id, txid, proofPath: proof?.path } });
       if (result.ok) {
         setSubmitted(true);
-        toast.success("Payment proof submitted for verification.");
+        setAutoVerified(Boolean((result as any).verified));
+        toast.success(result.message);
       } else {
         toast.error(result.message);
       }
@@ -362,7 +366,15 @@ function CheckoutPage() {
                   <li><span className="font-mono text-primary">3.</span> Copy the Transaction ID / TxID from your Binance payment history.</li>
                 </ol>
 
-                <form onSubmit={sendProof} className="space-y-3">
+                <form onSubmit={sendProof} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Payment screenshot (recommended)</Label>
+                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Sparkles className="h-3.5 w-3.5 text-primary" /> Upload your Binance receipt and our AI Vision
+                      check can unlock your download instantly.
+                    </p>
+                    <ProofDropzone value={proof} onChange={setProof} />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="txid">Binance Transaction ID / TxID</Label>
                     <Input
@@ -377,18 +389,21 @@ function CheckoutPage() {
                   </div>
                   <Button type="submit" size="lg" className="w-full" disabled={busy}>
                     {busy && <Spinner className="mr-2" />}
-                    {busy ? "Verifying submission…" : "Submit Payment for Verification"}
+                    {busy ? "AI Vision is checking your proof…" : "Submit Payment for Verification"}
                   </Button>
                 </form>
               </div>
             ) : (
               <div className="space-y-5">
                 <div className="rounded-md border border-primary/40 bg-primary/5 p-6 text-center">
-                  <Clock className="mx-auto h-8 w-8 text-primary" />
-                  <h1 className="mt-3 text-xl font-semibold tracking-tight">Payment Pending Founder Verification</h1>
+                  {autoVerified ? <Check className="mx-auto h-8 w-8 text-primary" /> : <Clock className="mx-auto h-8 w-8 text-primary" />}
+                  <h1 className="mt-3 text-xl font-semibold tracking-tight">
+                    {autoVerified ? "Payment Verified by AI Vision" : "Payment Pending Founder Verification"}
+                  </h1>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    Your TxID has been received. Your 5-minute download link will unlock automatically once the
-                    founder verifies the payment.
+                    {autoVerified
+                      ? "Your screenshot matched the order. Your download link is unlocked in your library right now."
+                      : "Your TxID has been received. Your 5-minute download link will unlock automatically once the payment is verified."}
                   </p>
                   <div className="mx-auto mt-4 max-w-xs space-y-2 text-left">
                     <CopyField label="Order reference" value={order.merchantTradeNo} />
