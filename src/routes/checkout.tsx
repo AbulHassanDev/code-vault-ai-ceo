@@ -274,23 +274,55 @@ function CheckoutPage() {
                     We accept Binance Pay. Nothing is charged until you send the transfer yourself.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={placeOrder}
-                  disabled={busy}
-                  className="flex w-full items-center justify-between rounded-md border-2 border-primary bg-primary/5 p-4 text-left transition-colors hover:bg-primary/10"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#F0B90B]/15 font-mono text-sm font-bold text-[#F0B90B]">
-                      B
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={placeOrder}
+                    disabled={busy}
+                    className="flex items-center justify-between rounded-md border-2 border-primary bg-primary/5 p-4 text-left transition-colors hover:bg-primary/10"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#F0B90B]/15 font-mono text-sm font-bold text-[#F0B90B]">
+                        B
+                      </div>
+                      <div>
+                        <div className="font-medium">Manual Binance Transfer</div>
+                        <div className="text-xs text-muted-foreground">QR / Pay ID — send {priceUsdt} USDT, zero fees</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-medium">Binance Pay / QR Code</div>
-                      <div className="text-xs text-muted-foreground">Send ${priceUsdt} USDT — zero fees</div>
+                    <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
+                  </button>
+                  <div
+                    aria-disabled
+                    className="relative flex cursor-not-allowed items-center justify-between rounded-md border border-border bg-muted/40 p-4 opacity-70"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted font-mono text-sm font-bold text-muted-foreground">
+                        A
+                      </div>
+                      <div>
+                        <div className="font-medium text-muted-foreground">Automated Merchant API</div>
+                        <div className="text-xs text-muted-foreground">Instant webhook confirmation</div>
+                      </div>
                     </div>
+                    <Badge variant="outline" className="shrink-0 font-mono text-[10px] uppercase tracking-widest">
+                      Coming soon
+                    </Badge>
                   </div>
-                  <ArrowRight className="h-4 w-4 text-primary" />
-                </button>
+                </div>
+
+                <div className="rounded-md border border-primary/40 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">Automated Instant Webhook Gateway coming soon!</span>{" "}
+                  Current orders are manually verified by our team/AI Ops within minutes.
+                </div>
+
+                <ol className="space-y-2 rounded-md border border-border bg-card p-4 text-sm text-muted-foreground">
+                  <li><span className="font-mono text-primary">1.</span> Transfer USDT using the Binance Pay ID / QR code.</li>
+                  <li><span className="font-mono text-primary">2.</span> Submit your Binance Transaction ID (TxID).</li>
+                  <li><span className="font-mono text-primary">3.</span> Approval queue verifies the TxID → your 5-minute download link unlocks in your library.</li>
+                </ol>
+
                 <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <ShieldCheck className="h-3.5 w-3.5" /> Ownership unlocks only after payment verification.
                 </p>
