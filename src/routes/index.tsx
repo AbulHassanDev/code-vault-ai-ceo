@@ -65,33 +65,39 @@ function Marketplace() {
       <SiteHeader />
 
       <section className="grid-lines border-b border-border">
-        <div className="mx-auto max-w-6xl px-4 py-24">
-          <Badge
-            variant="outline"
-            className="mb-6 flex w-fit items-center gap-2 border-primary/30 bg-primary/10 px-3 py-1 font-mono text-xs tracking-widest text-primary"
-          >
-            <span className="pulse-dot size-1.5 rounded-full bg-primary" />
-            LIVE · AI-OPERATED MARKETPLACE
-          </Badge>
-          <h1 className="max-w-3xl text-5xl font-bold leading-[1.05] tracking-tight sm:text-6xl">
-            Ship faster with production-grade source code.
-          </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            SaaS starter kits, dashboards, mobile apps and AI applications — quality-gated, securely delivered, and
-            operated around the clock by an AI system under founder control.
-          </p>
-          <div className="mt-9 flex flex-wrap gap-3">
-            <a href="#catalog">
-              <Button size="lg" className="shadow-glow">Browse the catalog</Button>
-            </a>
-            <Link to="/auth">
-              <Button size="lg" variant="outline">
-                Create an account
-              </Button>
-            </Link>
+        <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-8 px-4 py-16 lg:grid-cols-12 lg:py-24">
+          <div className="lg:col-span-7">
+            <Badge
+              variant="outline"
+              className="mb-6 flex w-fit items-center gap-2 border-primary/30 bg-primary/10 px-3 py-1 font-mono text-xs tracking-widest text-primary"
+            >
+              <span className="pulse-dot size-1.5 rounded-full bg-primary" />
+              LIVE · AI-OPERATED MARKETPLACE
+            </Badge>
+            <h1 className="max-w-3xl text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
+              Ship faster with production-grade source code.
+            </h1>
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+              SaaS starter kits, dashboards, mobile apps and AI applications — quality-gated, securely delivered, and
+              operated around the clock by an AI system under founder control.
+            </p>
+            <div className="mt-9 flex flex-wrap gap-3">
+              <a href="#catalog">
+                <Button size="lg" className="shadow-glow">Browse the catalog</Button>
+              </a>
+              <Link to="/auth">
+                <Button size="lg" variant="outline">
+                  Create an account
+                </Button>
+              </Link>
+            </div>
+          </div>
+          <div className="lg:col-span-5">
+            <HeroVault />
           </div>
         </div>
       </section>
+
 
       <section id="catalog" className="mx-auto max-w-6xl px-4 py-14">
         <div className="mb-8 flex flex-wrap items-center gap-3">
