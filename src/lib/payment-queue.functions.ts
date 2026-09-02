@@ -18,7 +18,7 @@ export const paymentQueue = createServerFn({ method: "GET" })
     const { data: orders } = await supabaseAdmin
       .from("orders")
       .select(
-        "id,status,amount_cents,currency,merchant_trade_no,buyer_txid,provider,provider_tx_id,verification_note,verified_at,created_at,user_id,product_id,products(title,slug)",
+        "id,status,amount_cents,currency,merchant_trade_no,buyer_txid,provider,provider_tx_id,verification_note,verified_at,created_at,user_id,product_id,proof_path,ai_verification,review_reason,products(title,slug)",
       )
       .order("created_at", { ascending: false })
       .limit(100);
@@ -56,6 +56,9 @@ export const paymentQueue = createServerFn({ method: "GET" })
         productSlug: o.products?.slug ?? null,
         buyerEmail: byUser.get(o.user_id)?.email ?? null,
         buyerName: byUser.get(o.user_id)?.display_name ?? null,
+        proofPath: (o.proof_path as string | null) ?? null,
+        aiVerification: (o.ai_verification as any) ?? null,
+        reviewReason: (o.review_reason as string | null) ?? null,
 
       })),
       metrics: { pendingCents, verifiedTodayCents, unresolvedTxids },
@@ -72,7 +75,7 @@ export const verifyPaymentManually = createServerFn({ method: "POST" })
     z
       .object({
         orderId: z.string().uuid(),
-        decision: z.enum(["approve", "flag", "reject"]),
+        decision: z.enum(["approve", "flag", "reject", "reupload"]),
         note: z.string().max(500).optional(),
       })
       .parse(input),
@@ -90,11 +93,16 @@ export const verifyPaymentManually = createServerFn({ method: "POST" })
     if (!order) return { ok: false, message: "Order not found." };
 
     if (data.decision !== "approve") {
-      const failureReason = data.decision === "flag" ? "invalid_txid" : "rejected_by_founder";
+      const failureReason =
+        data.decision === "flag"
+          ? "invalid_txid"
+          : data.decision === "reupload"
+            ? "reupload_requested"
+            : "rejected_by_founder";
       await supabaseAdmin
         .from("orders")
         .update({
-          status: data.decision === "flag" ? "pending" : "failed",
+          status: data.decision === "reject" ? "failed" : "pending",
           failure_reason: failureReason,
           verification_note: data.note ?? failureReason,
           verified_by: userId,
@@ -110,7 +118,12 @@ export const verifyPaymentManually = createServerFn({ method: "POST" })
       });
       return {
         ok: true,
-        message: data.decision === "flag" ? "TxID flagged as invalid." : "Order rejected.",
+        message:
+          data.decision === "flag"
+            ? "TxID flagged as invalid."
+            : data.decision === "reupload"
+              ? "Buyer asked to re-upload a clearer payment screenshot."
+              : "Order rejected.",
       };
     }
 
@@ -172,4 +185,16 @@ export const setPaymentMode = createServerFn({ method: "POST" })
       .eq("id", true);
     if (error) throw new Error(error.message);
     return { ok: true, message: `Payment mode set to ${data.mode}.` };
+  });
+
+/** Short-lived signed URL so the founder can inspect a buyer's payment screenshot. */
+export const getProofUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ path: z.string().max(400) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context as any;
+    await assertAdmin(supabase, userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: signed } = await supabaseAdmin.storage.from("payment-proofs").createSignedUrl(data.path, 300);
+    return { url: signed?.signedUrl ?? null };
   });
