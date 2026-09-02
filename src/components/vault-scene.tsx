@@ -81,21 +81,20 @@ function VaultCube({ dark }: { dark: boolean }) {
       <mesh castShadow>
         <boxGeometry args={[2.15, 2.15, 2.15]} />
         <meshPhysicalMaterial
-          color={dark ? "#151b2b" : "#e7ebf5"}
-          roughness={0.12}
-          metalness={0.35}
-          transmission={0.65}
-          thickness={1.6}
-          ior={1.35}
+          color={dark ? "#6366f1" : "#c7d2fe"}
+          roughness={0.08}
+          metalness={0.2}
+          clearcoat={1}
           transparent
-          opacity={0.85}
+          opacity={dark ? 0.14 : 0.22}
+          side={THREE.DoubleSide}
         />
-        <Edges scale={1.001} threshold={15} color={edge} />
+        <Edges scale={1.001} threshold={15} color={edge} lineWidth={2} />
       </mesh>
 
       <mesh ref={inner}>
         <icosahedronGeometry args={[0.95, 1]} />
-        <meshBasicMaterial color={accent} wireframe transparent opacity={dark ? 0.55 : 0.4} />
+        <meshBasicMaterial color={accent} wireframe transparent opacity={dark ? 0.8 : 0.55} />
       </mesh>
 
       <mesh>
@@ -103,7 +102,7 @@ function VaultCube({ dark }: { dark: boolean }) {
         <meshStandardMaterial
           color={edge}
           emissive={edge}
-          emissiveIntensity={dark ? 1.6 : 0.5}
+          emissiveIntensity={dark ? 2.4 : 0.9}
           roughness={0.25}
           toneMapped={false}
         />
@@ -112,7 +111,7 @@ function VaultCube({ dark }: { dark: boolean }) {
       {/* Vault "lock" ring */}
       <mesh rotation-x={Math.PI / 2}>
         <torusGeometry args={[1.35, 0.035, 10, 64]} />
-        <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={dark ? 1.1 : 0.3} toneMapped={false} />
+        <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={dark ? 1.8 : 0.6} toneMapped={false} />
       </mesh>
     </group>
   );
