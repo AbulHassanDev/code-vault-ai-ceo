@@ -90,7 +90,16 @@ export const paymentQueue = createServerFn({ method: "GET" })
         reviewReason: (o.review_reason as string | null) ?? null,
 
       })),
-      metrics: { pendingCents, verifiedTodayCents, unresolvedTxids },
+      metrics: {
+        pendingCents,
+        verifiedTodayCents,
+        unresolvedTxids,
+        revenueSeries,
+        pendingSeries,
+        revenueTrendPct,
+        autoVerifiedToday,
+      },
+
     };
   });
 
