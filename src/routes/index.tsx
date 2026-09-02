@@ -40,12 +40,11 @@ export const Route = createFileRoute("/")({
   component: Marketplace,
 });
 
-const money = (cents: number) => `$${(cents / 100).toFixed(0)}`;
-
 function Marketplace() {
   const { data: products } = useSuspenseQuery(productsQuery);
   const [category, setCategory] = useState<string>("all");
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<SortValue>("quality");
 
   const [filtering, setFiltering] = useState(false);
 
@@ -53,14 +52,27 @@ function Marketplace() {
     setFiltering(true);
     const t = setTimeout(() => setFiltering(false), 220);
     return () => clearTimeout(t);
-  }, [category, query]);
+  }, [category, query, sort]);
 
-  const categories = ["all", ...Array.from(new Set(products.map((p: any) => p.category)))];
-  const filtered = products.filter(
-    (p: any) =>
-      (category === "all" || p.category === category) &&
-      (query === "" || `${p.title} ${p.tagline} ${p.tech?.join(" ")}`.toLowerCase().includes(query.toLowerCase())),
+  const categories = Array.from(
+    new Set<string>([...CATEGORY_TABS, ...products.map((p: any) => String(p.category))]),
   );
+  const q = query.trim().toLowerCase();
+  const filtered = products
+    .filter(
+      (p: any) =>
+        (category === "all" || p.category === category) &&
+        (q === "" ||
+          `${p.title} ${p.tagline ?? ""} ${p.description ?? ""} ${(p.tech ?? []).join(" ")} ${(p.tags ?? []).join(" ")}`
+            .toLowerCase()
+            .includes(q)),
+    )
+    .sort((a: any, b: any) => {
+      if (sort === "price-asc") return a.price_cents - b.price_cents;
+      if (sort === "price-desc") return b.price_cents - a.price_cents;
+      if (sort === "recent") return String(b.created_at ?? "").localeCompare(String(a.created_at ?? ""));
+      return (b.quality_score ?? 0) - (a.quality_score ?? 0);
+    });
 
   return (
     <div className="min-h-screen">
