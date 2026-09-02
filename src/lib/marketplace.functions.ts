@@ -35,7 +35,7 @@ export const getPublicProduct = createServerFn({ method: "GET" })
     const { data: product } = await publicClient()
       .from("products")
       .select(
-        "id,slug,title,tagline,description,category,tech,price_cents,cover_url,demo_url,seo_title,seo_description,tags,quality_score",
+        "id,slug,title,tagline,description,category,tech,price_cents,cover_url,demo_url,sandbox_url,license_type,repo_ref,static_analysis,created_at,seo_title,seo_description,tags,quality_score",
       )
       .eq("slug", data.slug)
       .eq("status", "published")
