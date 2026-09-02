@@ -29,6 +29,9 @@ export type VisionResult = {
 
 const MODEL = "google/gemini-3.7-flash";
 const EXPECTED_PAY_ID = "530019824";
+/** Level 1 autonomy threshold — below this the order is routed to the founder approval queue. */
+const AUTO_APPROVE_CONFIDENCE = 0.95;
+
 
 const PROMPT = `You are a payment-proof inspector for a digital marketplace that accepts Binance Pay transfers in USDT.
 Look at the attached payment screenshot and extract the transaction facts.
