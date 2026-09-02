@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
+import { ProofInspector } from "@/components/proof-inspector";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -127,7 +128,7 @@ function CommandCenter() {
   const paymentOrders = payments.data?.orders ?? [];
   const awaitingVerification = paymentOrders.filter((o) => o.status === "pending");
 
-  async function decidePayment(orderId: string, decision: "approve" | "flag" | "reject") {
+  async function decidePayment(orderId: string, decision: "approve" | "flag" | "reject" | "reupload") {
     try {
       const r = await verifyPayment({ data: { orderId, decision } });
       r.ok ? toast.success(r.message) : toast.error(r.message);
@@ -352,6 +353,8 @@ function CommandCenter() {
                   </div>
                 </div>
 
+                <ProofInspector path={(o as any).proofPath ?? null} verification={(o as any).aiVerification ?? null} />
+
                 {o.verificationNote && (
                   <p className="mt-3 font-mono text-xs text-muted-foreground">Note: {o.verificationNote}</p>
                 )}
@@ -364,8 +367,11 @@ function CommandCenter() {
                     <Button size="sm" variant="outline" onClick={() => decidePayment(o.id, "flag")}>
                       Flag invalid TxID
                     </Button>
+                    <Button size="sm" variant="outline" onClick={() => decidePayment(o.id, "reupload")}>
+                      Request re-upload
+                    </Button>
                     <Button size="sm" variant="destructive" onClick={() => decidePayment(o.id, "reject")}>
-                      Reject order
+                      Reject fake proof
                     </Button>
                   </div>
                 )}
