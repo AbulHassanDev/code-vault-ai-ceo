@@ -87,6 +87,7 @@ function VaultCube({ dark }: { dark: boolean }) {
           clearcoat={1}
           transparent
           opacity={dark ? 0.14 : 0.22}
+          depthWrite={false}
           side={THREE.DoubleSide}
         />
         <Edges scale={1.001} threshold={15} color={edge} lineWidth={2} />
