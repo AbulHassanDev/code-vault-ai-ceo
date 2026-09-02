@@ -82,6 +82,7 @@ function normalize(value: string | null | undefined) {
  */
 async function routeToApprovalQueue(order: any, tags: string[], extraction: VisionExtraction | null) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { stableHash } = await import("./ai-tools.server");
   if (order.status !== "pending") return;
 
   const { data: existing } = await supabaseAdmin
@@ -104,7 +105,7 @@ async function routeToApprovalQueue(order: any, tags: string[], extraction: Visi
     task_id: taskId,
     tool_name: "release_verified_payment",
     args,
-    args_hash: `${JSON.stringify(args).length}:vision`,
+    args_hash: stableHash(args),
     title,
     reason: tags.join(", "),
     risk_level: "high",
@@ -206,7 +207,8 @@ export async function verifyProofWithVision(orderId: string): Promise<VisionResu
   const payId = normalize(extraction.recipient_pay_id);
   if (payId && !payId.includes(EXPECTED_PAY_ID)) tags.push("Recipient Pay ID mismatch");
 
-  if ((extraction.confidence ?? 0) < 0.6) tags.push("Low AI confidence");
+  if ((extraction.confidence ?? 0) < AUTO_APPROVE_CONFIDENCE)
+    tags.push(`Low OCR confidence: ${Math.round((extraction.confidence ?? 0) * 100)}% (need 95%)`);
 
   if (tags.length > 0) return fail(tags, undefined, extraction);
 
