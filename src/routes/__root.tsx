@@ -139,6 +139,13 @@ function RootComponent() {
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
         <Toaster position="top-right" />
+        {/* Client-only analytics: web vitals + traffic, no-ops outside a Vercel deployment. */}
+        <ClientOnly>
+          <Suspense fallback={null}>
+            <Analytics />
+            <SpeedInsights />
+          </Suspense>
+        </ClientOnly>
       </ThemeProvider>
     </QueryClientProvider>
   );
