@@ -143,17 +143,33 @@ export const requestDownload = createServerFn({ method: "POST" })
       : { ok: false, message: "Could not create a download link. An incident has been logged." };
   });
 
-/** Buyer attaches their Binance TxID as proof. Never marks the order paid — founder verification only. */
+/**
+ * Buyer attaches their Binance TxID plus an optional payment screenshot.
+ * When a screenshot is present, the AI Vision engine inspects it and may
+ * auto-release the download; otherwise the order goes to the founder queue.
+ */
 export const submitPaymentProof = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ orderId: z.string().uuid(), txid: z.string().min(6).max(120) }).parse(input),
+    z
+      .object({
+        orderId: z.string().uuid(),
+        txid: z.string().min(6).max(120),
+        proofPath: z.string().max(400).optional(),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as any;
+    if (data.proofPath && !data.proofPath.startsWith(`${userId}/`)) {
+      return { ok: false, message: "Invalid proof upload path." };
+    }
     const { data: order, error } = await supabase
       .from("orders")
-      .update({ buyer_txid: data.txid.trim() })
+      .update({
+        buyer_txid: data.txid.trim(),
+        ...(data.proofPath ? { proof_path: data.proofPath } : {}),
+      })
       .eq("id", data.orderId)
       .eq("user_id", userId)
       .eq("status", "pending")
@@ -162,9 +178,33 @@ export const submitPaymentProof = createServerFn({ method: "POST" })
     if (error || !order) return { ok: false, message: "Pending order not found." };
     await supabase.from("ai_events").insert({
       type: "payment_proof_submitted",
-      payload: { order_id: order.id, merchant_trade_no: order.merchant_trade_no },
+      payload: { order_id: order.id, merchant_trade_no: order.merchant_trade_no, has_screenshot: Boolean(data.proofPath) },
     });
-    return { ok: true, message: "Payment proof received. Awaiting founder verification." };
+
+    if (!data.proofPath) {
+      return {
+        ok: true,
+        verified: false,
+        tags: [] as string[],
+        message: "Payment proof received. Awaiting founder verification.",
+      };
+    }
+
+    const { verifyProofWithVision } = await import("./vision.server");
+    const result = await verifyProofWithVision(order.id as string);
+    return result.decision === "auto_approved"
+      ? {
+          ok: true,
+          verified: true,
+          tags: result.tags,
+          message: "AI Vision verified your payment — your download is unlocked in your library.",
+        }
+      : {
+          ok: true,
+          verified: false,
+          tags: result.tags,
+          message: "Screenshot received. Our AI could not fully verify it, so a founder is reviewing your order.",
+        };
   });
 
 export const myLibrary = createServerFn({ method: "GET" })
