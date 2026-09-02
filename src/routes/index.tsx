@@ -37,6 +37,9 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    industry: typeof search["industry"] === "string" ? (search["industry"] as string) : undefined,
+  }),
   loader: ({ context }) => context.queryClient.ensureQueryData(productsQuery),
   errorComponent: ({ error }) => (
     <div className="p-10 text-center text-muted-foreground">Catalog unavailable: {error.message}</div>
@@ -47,6 +50,8 @@ export const Route = createFileRoute("/")({
 
 function Marketplace() {
   const { data: products } = useSuspenseQuery(productsQuery);
+  const { industry } = Route.useSearch();
+  const navigate = useNavigate();
   const [category, setCategory] = useState<string>("all");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortValue>("quality");
@@ -57,16 +62,19 @@ function Marketplace() {
     setFiltering(true);
     const t = setTimeout(() => setFiltering(false), 220);
     return () => clearTimeout(t);
-  }, [category, query, sort]);
+  }, [category, query, sort, industry]);
 
   const categories = Array.from(
     new Set<string>([...CATEGORY_TABS, ...products.map((p: any) => String(p.category))]),
   );
+  const counts = industryCounts(products as any[]);
+  const activeIndustry = industry ? INDUSTRY_BY_SLUG[industry] : undefined;
   const q = query.trim().toLowerCase();
   const filtered = products
     .filter(
       (p: any) =>
         (category === "all" || p.category === category) &&
+        (!activeIndustry || matchesIndustry(p, activeIndustry.slug)) &&
         (q === "" ||
           `${p.title} ${p.tagline ?? ""} ${p.description ?? ""} ${(p.tech ?? []).join(" ")} ${(p.tags ?? []).join(" ")}`
             .toLowerCase()
