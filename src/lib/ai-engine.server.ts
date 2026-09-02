@@ -269,11 +269,13 @@ const AGENT_ROLE_BY_TOOL: Record<string, string> = {
   update_product_price: "Finance_Agent",
   create_discount_code: "Finance_Agent",
   propose_seller_payout: "Finance_Agent",
+  release_verified_payment: "Finance_Agent",
   create_campaign: "Growth_Agent",
   send_customer_message: "Support_Agent",
   create_product_draft: "Marketplace_Manager",
   create_incident: "Security_Agent",
 };
+
 
 const SYSTEM_PROMPT = `You are the CodeVault AI CEO — the operational brain of a digital software marketplace selling source code, SaaS starter kits and developer assets.
 
