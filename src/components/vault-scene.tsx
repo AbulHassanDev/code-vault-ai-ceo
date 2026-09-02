@@ -93,19 +93,13 @@ function VaultCube({ dark }: { dark: boolean }) {
       </mesh>
 
       <mesh ref={inner}>
-        <icosahedronGeometry args={[0.95, 1]} />
+        <icosahedronGeometry args={[1.15, 1]} />
         <meshBasicMaterial color={accent} wireframe transparent opacity={dark ? 0.8 : 0.55} />
       </mesh>
 
       <mesh>
         <icosahedronGeometry args={[0.34, 2]} />
-        <meshStandardMaterial
-          color={edge}
-          emissive={edge}
-          emissiveIntensity={dark ? 2.4 : 0.9}
-          roughness={0.25}
-          toneMapped={false}
-        />
+        <meshBasicMaterial color={edge} toneMapped={false} />
       </mesh>
 
       {/* Vault "lock" ring */}
