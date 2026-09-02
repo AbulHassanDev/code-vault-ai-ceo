@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { CategoriesMenu } from "@/components/categories-menu";
 
 export function SiteHeader() {
   const [email, setEmail] = useState<string | null>(null);
@@ -42,10 +43,11 @@ export function SiteHeader() {
         <nav className="flex items-center gap-1">
           <Link
             to="/"
-            className="rounded-md px-3.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="hidden rounded-md px-3.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:inline-block"
           >
             Marketplace
           </Link>
+          <CategoriesMenu />
           <ThemeToggle />
           {email ? (
             <>

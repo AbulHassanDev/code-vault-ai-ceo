@@ -1,12 +1,14 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { SiteHeader } from "@/components/site-header";
 import { HeroVault } from "@/components/hero-vault";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
 import { CATEGORY_TABS, SORT_OPTIONS, type SortValue } from "@/lib/product-meta";
+import { INDUSTRY_BY_SLUG, industryCounts, matchesIndustry } from "@/lib/industries";
+import { IndustryGrid } from "@/components/industry-grid";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { listPublicProducts } from "@/lib/marketplace.functions";
@@ -35,6 +37,8 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>): { industry?: string } =>
+    typeof search["industry"] === "string" ? { industry: search["industry"] as string } : {},
   loader: ({ context }) => context.queryClient.ensureQueryData(productsQuery),
   errorComponent: ({ error }) => (
     <div className="p-10 text-center text-muted-foreground">Catalog unavailable: {error.message}</div>
@@ -45,6 +49,8 @@ export const Route = createFileRoute("/")({
 
 function Marketplace() {
   const { data: products } = useSuspenseQuery(productsQuery);
+  const { industry } = Route.useSearch();
+  const navigate = useNavigate();
   const [category, setCategory] = useState<string>("all");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortValue>("quality");
@@ -55,16 +61,19 @@ function Marketplace() {
     setFiltering(true);
     const t = setTimeout(() => setFiltering(false), 220);
     return () => clearTimeout(t);
-  }, [category, query, sort]);
+  }, [category, query, sort, industry]);
 
   const categories = Array.from(
     new Set<string>([...CATEGORY_TABS, ...products.map((p: any) => String(p.category))]),
   );
+  const counts = industryCounts(products as any[]);
+  const activeIndustry = industry ? INDUSTRY_BY_SLUG[industry] : undefined;
   const q = query.trim().toLowerCase();
   const filtered = products
     .filter(
       (p: any) =>
         (category === "all" || p.category === category) &&
+        (!activeIndustry || matchesIndustry(p, activeIndustry.slug)) &&
         (q === "" ||
           `${p.title} ${p.tagline ?? ""} ${p.description ?? ""} ${(p.tech ?? []).join(" ")} ${(p.tags ?? []).join(" ")}`
             .toLowerCase()
@@ -115,8 +124,21 @@ function Marketplace() {
         </div>
       </section>
 
+      <IndustryGrid counts={counts} />
 
       <section id="catalog" className="mx-auto max-w-6xl px-4 py-14">
+        {activeIndustry && (
+          <div className="mb-6 flex flex-wrap items-center gap-3">
+            <span className="text-sm text-muted-foreground">Filtered by industry:</span>
+            <button
+              onClick={() => navigate({ to: "/", search: {} })}
+              className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-sm text-primary transition-colors hover:bg-primary/20"
+            >
+              {activeIndustry.label}
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
         <div className="mb-6 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
           <div className="relative min-w-0">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
