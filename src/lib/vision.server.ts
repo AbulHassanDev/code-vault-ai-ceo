@@ -29,6 +29,9 @@ export type VisionResult = {
 
 const MODEL = "google/gemini-3.7-flash";
 const EXPECTED_PAY_ID = "530019824";
+/** Level 1 autonomy threshold — below this the order is routed to the founder approval queue. */
+const AUTO_APPROVE_CONFIDENCE = 0.95;
+
 
 const PROMPT = `You are a payment-proof inspector for a digital marketplace that accepts Binance Pay transfers in USDT.
 Look at the attached payment screenshot and extract the transaction facts.
@@ -74,6 +77,59 @@ function normalize(value: string | null | undefined) {
 }
 
 /**
+ * LEVEL 2 guardrail: anything the vision engine cannot fully verify becomes a
+ * founder approval card in /admin/ai carrying the specific risk tags.
+ */
+async function routeToApprovalQueue(order: any, tags: string[], extraction: VisionExtraction | null) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { stableHash } = await import("./ai-tools.server");
+  if (order.status !== "pending") return;
+
+  const { data: existing } = await supabaseAdmin
+    .from("ai_approvals")
+    .select("id")
+    .eq("tool_name", "release_verified_payment")
+    .eq("status", "pending")
+    .contains("args", { order_id: order.id })
+    .maybeSingle();
+  if (existing) return;
+
+  const args = { order_id: order.id, reason: tags.join(", ") || "AI Vision could not verify this proof" };
+  const taskId = `TASK-${Date.now().toString(36).toUpperCase()}`;
+  const title = `Review payment proof — order ${order.merchant_trade_no ?? String(order.id).slice(0, 8)}`;
+
+  await supabaseAdmin.from("ai_approvals").insert({
+    agent_key: "FINANCE_AGENT",
+    agent_role: "Finance_Agent",
+    action_type: "PROPOSE_APPROVAL",
+    task_id: taskId,
+    tool_name: "release_verified_payment",
+    args,
+    args_hash: stableHash(args),
+    title,
+    reason: tags.join(", "),
+    risk_level: "high",
+    confidence: extraction?.confidence ?? null,
+    evidence: { risk_tags: tags, extraction, order_id: order.id, amount_cents: order.amount_cents },
+    expected_outcome: "Order marked paid and the buyer download unlocked in /library.",
+    proposal: {
+      task_id: taskId,
+      agent_role: "Finance_Agent",
+      action_type: "PROPOSE_APPROVAL",
+      permission_level: "LEVEL_2",
+      risk_level: "high",
+      summary: title,
+      risk_tags: tags,
+      buyer_txid: order.buyer_txid,
+      amount_cents: order.amount_cents,
+      reversible: false,
+    },
+  });
+}
+
+
+
+/**
  * Inspects the uploaded proof for an order and either auto-approves it or
  * flags it for the founder queue. Always writes the outcome onto the order.
  */
@@ -101,9 +157,11 @@ export async function verifyProofWithVision(orderId: string): Promise<VisionResu
         .from("orders")
         .update({ ai_verification: result as any, review_reason: tags.join(", ") })
         .eq("id", order.id);
+      await routeToApprovalQueue(order, tags, extraction);
     }
     return result;
   };
+
 
   if (!order) return { decision: "needs_human_review", tags: ["Order not found"], extraction: null, model: MODEL, checkedAt };
   if (order.status !== "pending") return fail(["Order is not pending"]);
@@ -149,7 +207,8 @@ export async function verifyProofWithVision(orderId: string): Promise<VisionResu
   const payId = normalize(extraction.recipient_pay_id);
   if (payId && !payId.includes(EXPECTED_PAY_ID)) tags.push("Recipient Pay ID mismatch");
 
-  if ((extraction.confidence ?? 0) < 0.6) tags.push("Low AI confidence");
+  if ((extraction.confidence ?? 0) < AUTO_APPROVE_CONFIDENCE)
+    tags.push(`Low OCR confidence: ${Math.round((extraction.confidence ?? 0) * 100)}% (need 95%)`);
 
   if (tags.length > 0) return fail(tags, undefined, extraction);
 

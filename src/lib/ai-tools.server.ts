@@ -634,7 +634,62 @@ const level2Tools: ToolDefinition[] = [
       return { ...data, note: "Recorded only. The founder settles this outside the AI system." };
     },
   },
+  {
+    name: "release_verified_payment",
+    description:
+      "Release a manual Binance transfer order that AI Vision could NOT fully verify (low OCR confidence, amount mismatch, unreadable proof). Never executes directly — always creates a founder approval card. On approval the order is marked paid and the buyer download is unlocked.",
+    permission: "LEVEL_2",
+    risk: "high",
+    schema: z.object({
+      order_id: z.string(),
+      reason: z.string(),
+      risk_tags: z.array(z.string()).optional(),
+    }),
+    summarize: (a) => `Release payment for order ${String(a.order_id).slice(0, 8)} — ${a.reason}`,
+    handler: async (args, { supabase, userId }) => {
+      const { data: order, error } = await supabase
+        .from("orders")
+        .select("id,user_id,product_id,status,buyer_txid,amount_cents,merchant_trade_no")
+        .eq("id", args.order_id)
+        .maybeSingle();
+      if (error || !order) throw new Error("Order not found.");
+      if (order.status === "paid") return { already_paid: true, order_id: order.id };
+
+      const { error: updateError } = await supabase
+        .from("orders")
+        .update({
+          status: "paid",
+          provider_tx_id: order.buyer_txid,
+          provider_ref: order.buyer_txid,
+          verified_at: new Date().toISOString(),
+          verified_by: userId,
+          verification_note: `Founder-approved release after AI review: ${args.reason}`,
+          failure_reason: null,
+          review_reason: null,
+        })
+        .eq("id", order.id);
+      if (updateError) throw new Error(updateError.message);
+
+      const { data: existing } = await supabase
+        .from("purchases")
+        .select("id")
+        .eq("user_id", order.user_id)
+        .eq("product_id", order.product_id)
+        .maybeSingle();
+      if (!existing) {
+        await supabase
+          .from("purchases")
+          .insert({ user_id: order.user_id, product_id: order.product_id, order_id: order.id });
+      }
+      await supabase.from("ai_events").insert({
+        type: "payment_verified",
+        payload: { order_id: order.id, mode: "founder_approved_ai_review", amount_cents: order.amount_cents },
+      });
+      return { order_id: order.id, status: "paid", download_unlocked: true };
+    },
+  },
 ];
+
 
 /* ------------------------------------------------------------------ */
 /* LEVEL 3 — human only. Declared so the AI can recommend, never run.  */

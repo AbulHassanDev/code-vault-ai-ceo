@@ -14,6 +14,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { aiChat, decideApproval, runDailyLoop, toggleAgent, updateAiSettings } from "@/lib/ai.functions";
 import { paymentQueue, setPaymentMode, verifyPaymentManually } from "@/lib/payment-queue.functions";
 import { toast } from "sonner";
+import {
+  BarChart3,
+  FileText,
+  RefreshCw,
+  ScanSearch,
+  ShieldAlert,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 
 const money = (cents: number, currency = "USDT") =>
   `${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
@@ -21,11 +30,80 @@ const money = (cents: number, currency = "USDT") =>
 const activeTabClass =
   "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-semibold data-[state=active]:shadow-none";
 
+/** Compact 7-point trend sparkline for the executive metric cards. */
+function Sparkline({ values }: { values: number[] }) {
+  if (!values || values.length < 2 || values.every((v) => v === 0)) return null;
+  const max = Math.max(...values, 1);
+  const points = values
+    .map((v, i) => `${(i / (values.length - 1)) * 68},${20 - (v / max) * 18}`)
+    .join(" ");
+  return (
+    <svg viewBox="0 0 68 20" className="h-6 w-[68px] shrink-0 text-primary" aria-hidden>
+      <polyline points={points} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Execution/confidence pills derived from the CEO's structured proposal block. */
+function MessagePills({ content }: { content: string }) {
+  const match = content.match(/```json\s*([\s\S]*?)```/);
+  let parsed: any = null;
+  if (match?.[1]) {
+    try {
+      parsed = JSON.parse(match[1]);
+    } catch {
+      parsed = null;
+    }
+  }
+  const pills: { label: string; tone: string }[] = [];
+  if (parsed?.agent_role) pills.push({ label: parsed.agent_role, tone: "border-primary/40 bg-primary/10 text-primary" });
+  if (parsed?.risk_level)
+    pills.push({
+      label: `${parsed.risk_level} risk`,
+      tone:
+        parsed.risk_level === "high" || parsed.risk_level === "critical"
+          ? "border-destructive/40 bg-destructive/10 text-destructive"
+          : "border-amber-500/40 bg-amber-500/10 text-amber-500",
+    });
+  if (parsed?.approval_id)
+    pills.push({ label: "Approval created", tone: "border-amber-500/40 bg-amber-500/10 text-amber-500" });
+  else if (parsed)
+    pills.push({ label: "Level 2 proposal", tone: "border-amber-500/40 bg-amber-500/10 text-amber-500" });
+  if (/executed|verified|updated|saved/i.test(content) && !parsed)
+    pills.push({ label: "Level 1 executed", tone: "border-emerald-500/40 bg-emerald-500/10 text-emerald-500" });
+  if (pills.length === 0) return null;
+  return (
+    <div className="mt-1.5 flex flex-wrap gap-1.5">
+      {pills.map((p) => (
+        <span key={p.label} className={`rounded-full border px-2 py-0.5 font-mono text-[10px] ${p.tone}`}>
+          {p.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 const QUICK_PROMPTS = [
-  { label: "Audit Pending TxIDs", prompt: "Audit all pending orders with submitted TxIDs. Summarize each order, its buyer, amount, and flag any suspicious patterns." },
-  { label: "Review Product Catalog", prompt: "Review the product catalog: listing readiness, pricing consistency, and which products should be featured or delisted." },
-  { label: "Generate Weekly Report", prompt: "Generate a weekly business report covering revenue, orders, support load, security incidents, and the top 3 recommended actions." },
+  {
+    label: "Audit Pending TxIDs",
+    level: "Level 1 · Finance",
+    icon: ScanSearch,
+    prompt: "Audit all pending orders with submitted TxIDs. Summarize each order, its buyer, amount, and flag any suspicious patterns.",
+  },
+  {
+    label: "Review Product Catalog",
+    level: "Level 1 · Marketplace",
+    icon: BarChart3,
+    prompt: "Review the product catalog: listing readiness, pricing consistency, and which products should be featured or delisted.",
+  },
+  {
+    label: "Generate Weekly Report",
+    level: "Level 1 · Growth",
+    icon: FileText,
+    prompt: "Generate a weekly business report covering revenue, orders, support load, security incidents, and the top 3 recommended actions.",
+  },
 ];
+
 
 type ApprovalFilter = "all" | "payments" | "catalog" | "payouts";
 const APPROVAL_FILTERS: { key: ApprovalFilter; label: string; match: (a: any) => boolean }[] = [
@@ -170,18 +248,29 @@ function CommandCenter() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       <SiteHeader />
-      <div className="mx-auto max-w-6xl px-4 py-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-baseline gap-3">
-            <h1 className="font-mono text-[11px] uppercase tracking-[0.3em] text-primary">AI Operating System</h1>
-            <p className="text-2xl font-semibold tracking-tight">Command Center</p>
+      <div className="mx-auto w-full max-w-6xl px-3 py-4 sm:px-4 sm:py-6">
+        <div className="glass-panel flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+          <div className="min-w-0">
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary">AI Operating System</p>
+            <h1 className="mt-1 truncate font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+              Command Center
+            </h1>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Badge variant={s?.emergency_stop ? "destructive" : s?.paused ? "outline" : "default"}>
-              {s?.emergency_stop ? "EMERGENCY STOP" : s?.paused ? "PAUSED" : "OPERATING"}
-            </Badge>
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`status-ring inline-flex items-center gap-2 rounded-full border px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] ${
+                s?.emergency_stop
+                  ? "border-destructive/50 bg-destructive/10 text-destructive"
+                  : s?.paused
+                    ? "border-amber-500/50 bg-amber-500/10 text-amber-500"
+                    : "border-emerald-500/50 bg-emerald-500/10 text-emerald-500"
+              }`}
+            >
+              <span className="pulse-dot size-1.5 rounded-full bg-current" />
+              {s?.emergency_stop ? "Emergency stop" : s?.paused ? "Paused" : "Operating"}
+            </span>
             <Button
               variant="outline"
               size="sm"
@@ -191,71 +280,119 @@ function CommandCenter() {
                 qc.invalidateQueries();
               }}
             >
-              Run daily loop
+              <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+              Daily loop
             </Button>
             <Button
               variant={s?.emergency_stop ? "default" : "destructive"}
               size="sm"
               onClick={() => patch({ emergency_stop: !s?.emergency_stop })}
             >
+              <ShieldAlert className="mr-1.5 h-3.5 w-3.5" />
               {s?.emergency_stop ? "Release stop" : "Emergency stop"}
             </Button>
           </div>
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { label: "Pending payments (USDT)", value: money(metrics?.pendingCents ?? 0), tone: "text-foreground" },
-            { label: "Verified revenue today (USDT)", value: money(metrics?.verifiedTodayCents ?? 0), tone: "text-primary" },
+            {
+              label: "Pending payments",
+              value: money(metrics?.pendingCents ?? 0),
+              tone: "text-foreground",
+              series: metrics?.pendingSeries ?? [],
+              foot: `${awaitingVerification.length} awaiting verification`,
+              trend: null as number | null,
+            },
+            {
+              label: "Verified revenue today",
+              value: money(metrics?.verifiedTodayCents ?? 0),
+              tone: "text-primary",
+              series: metrics?.revenueSeries ?? [],
+              foot: `${metrics?.autoVerifiedToday ?? 0} auto-verified by AI Vision`,
+              trend: metrics?.revenueTrendPct ?? 0,
+            },
             {
               label: "Unresolved TxIDs",
               value: String(metrics?.unresolvedTxids ?? 0),
               tone: (metrics?.unresolvedTxids ?? 0) > 0 ? "text-destructive" : "text-foreground",
+              series: [],
+              foot: "Routed to the approvals queue",
+              trend: null as number | null,
             },
           ].map((m) => (
-            <div key={m.label} className="panel p-5">
-              <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                <span className="pulse-dot size-1.5 rounded-full bg-primary" />
-                {m.label}
+            <div key={m.label} className="glass-panel card-hover min-w-0 p-4 sm:p-5">
+              <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                <span className="pulse-dot size-1.5 shrink-0 rounded-full bg-primary" />
+                <span className="truncate">{m.label}</span>
               </p>
-              <p className={`mt-2 text-2xl font-semibold tracking-tight ${m.tone}`}>{m.value}</p>
+              <div className="mt-2 flex items-end justify-between gap-3">
+                <p className={`font-display text-2xl font-semibold tracking-tight sm:text-3xl ${m.tone}`}>{m.value}</p>
+                <Sparkline values={m.series} />
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {m.trend !== null && (
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[10px] ${
+                      m.trend >= 0
+                        ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-500"
+                        : "border-destructive/40 bg-destructive/10 text-destructive"
+                    }`}
+                  >
+                    {m.trend >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                    {m.trend >= 0 ? "+" : ""}
+                    {m.trend}% today
+                  </span>
+                )}
+                <span className="truncate font-mono text-[10px] text-muted-foreground">{m.foot}</span>
+              </div>
             </div>
           ))}
         </div>
 
-        <Tabs defaultValue="chat" className="mt-6">
-          <TabsList>
-            <TabsTrigger value="chat" className={activeTabClass}>AI CEO</TabsTrigger>
-            <TabsTrigger value="payments" className={activeTabClass}>
-              Payments {awaitingVerification.length > 0 && `(${awaitingVerification.length})`}
-            </TabsTrigger>
-            <TabsTrigger value="approvals" className={activeTabClass}>
-              Approvals {pending.length > 0 && `(${pending.length})`}
-            </TabsTrigger>
-            <TabsTrigger value="agents" className={activeTabClass}>Agents</TabsTrigger>
-            <TabsTrigger value="activity" className={activeTabClass}>Activity</TabsTrigger>
-            <TabsTrigger value="reports" className={activeTabClass}>Reports</TabsTrigger>
-            <TabsTrigger value="controls" className={activeTabClass}>Controls</TabsTrigger>
-          </TabsList>
+        <Tabs defaultValue="chat" className="mt-5">
+          <div className="-mx-3 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0">
+            <TabsList className="w-max min-w-full justify-start">
+              <TabsTrigger value="chat" className={activeTabClass}>AI CEO</TabsTrigger>
+              <TabsTrigger value="payments" className={activeTabClass}>
+                Payments {awaitingVerification.length > 0 && `(${awaitingVerification.length})`}
+              </TabsTrigger>
+              <TabsTrigger value="approvals" className={activeTabClass}>
+                Approvals {pending.length > 0 && `(${pending.length})`}
+              </TabsTrigger>
+              <TabsTrigger value="agents" className={activeTabClass}>Agents</TabsTrigger>
+              <TabsTrigger value="activity" className={activeTabClass}>Activity</TabsTrigger>
+              <TabsTrigger value="reports" className={activeTabClass}>Reports</TabsTrigger>
+              <TabsTrigger value="controls" className={activeTabClass}>Controls</TabsTrigger>
+            </TabsList>
+          </div>
 
-          <TabsContent value="chat" className="panel mt-6 flex flex-col gap-4 p-6">
+          <TabsContent value="chat" className="glass-panel mt-5 flex flex-col gap-4 p-4 sm:p-6">
             <div className="flex max-h-[420px] min-h-[220px] flex-col gap-4 overflow-y-auto">
               {messages.length === 0 && (
                 <div className="grid gap-3">
-                  <p className="font-mono text-sm text-muted-foreground">
-                    Quick actions — click to run. Level 2 actions become approval requests; level 3 actions are
-                    refused by design.
+                  <p className="text-sm text-muted-foreground">
+                    Quick actions — click to run. Level 1 runs autonomously, level 2 becomes an approval card, level 3
+                    is refused by design.
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid gap-2 sm:grid-cols-3">
                     {QUICK_PROMPTS.map((q) => (
                       <button
                         key={q.label}
                         type="button"
                         disabled={thinking}
                         onClick={() => send(q.prompt)}
-                        className="rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 font-mono text-xs text-primary transition hover:border-primary hover:bg-primary/20 hover:text-primary/90 disabled:opacity-50"
+                        className="group flex items-start gap-3 rounded-xl border border-slate-500/20 bg-primary/5 p-3 text-left transition-all hover:-translate-y-0.5 hover:border-primary/60 hover:bg-primary/10 hover:shadow-[0_10px_30px_-12px_var(--primary)] disabled:opacity-50"
                       >
-                        {q.label}
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 text-primary transition-colors group-hover:bg-primary/20">
+                          <q.icon className="h-4 w-4" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-sm font-medium leading-tight">{q.label}</span>
+                          <span className="mt-0.5 block font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                            {q.level}
+                          </span>
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -264,17 +401,24 @@ function CommandCenter() {
               {messages.map((m, i) => (
                 <div key={i} className={m.role === "user" ? "text-right" : ""}>
                   <div
-                    className={`inline-block max-w-[85%] whitespace-pre-wrap rounded-lg px-4 py-3 text-sm ${
-                      m.role === "user" ? "bg-primary text-primary-foreground" : "border border-border bg-card"
+                    className={`inline-block max-w-[92%] break-words whitespace-pre-wrap rounded-xl px-4 py-3 text-left text-sm sm:max-w-[85%] ${
+                      m.role === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : "border border-slate-500/20 bg-card/70 backdrop-blur-md"
                     }`}
                   >
                     {m.content}
                   </div>
+                  {m.role === "assistant" && <MessagePills content={m.content} />}
                 </div>
               ))}
-              {thinking && <p className="font-mono text-xs text-muted-foreground">CEO agent is thinking…</p>}
+              {thinking && (
+                <p className="flex items-center gap-2 font-mono text-xs text-muted-foreground">
+                  <Spinner /> CEO agent is thinking…
+                </p>
+              )}
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <Textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -284,7 +428,7 @@ function CommandCenter() {
                   if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send();
                 }}
               />
-              <Button onClick={() => send()} disabled={thinking}>
+              <Button onClick={() => send()} disabled={thinking} className="sm:self-stretch">
                 {thinking ? (
                   <>
                     <Spinner className="mr-2" />
@@ -296,6 +440,7 @@ function CommandCenter() {
               </Button>
             </div>
           </TabsContent>
+
 
           <TabsContent value="payments" className="mt-6 grid gap-4">
             <p className="font-mono text-xs text-muted-foreground">

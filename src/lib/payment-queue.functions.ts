@@ -41,6 +41,35 @@ export const paymentQueue = createServerFn({ method: "GET" })
       .reduce((sum, o) => sum + (o.amount_cents ?? 0), 0);
     const unresolvedTxids = rows.filter((o) => o.status === "pending" && Boolean(o.buyer_txid)).length;
 
+    /** Trailing 7-day revenue series (oldest → today) powering the sparklines. */
+    const dayCents = (offset: number, filter: (o: any) => boolean) => {
+      const from = new Date(startOfDay.getTime() - offset * 86_400_000);
+      const to = new Date(from.getTime() + 86_400_000);
+      return rows
+        .filter((o) => filter(o))
+        .filter((o) => {
+          const at = new Date(o.verified_at ?? o.created_at);
+          return at >= from && at < to;
+        })
+        .reduce((sum, o) => sum + (o.amount_cents ?? 0), 0);
+    };
+    const revenueSeries = [6, 5, 4, 3, 2, 1, 0].map((d) => dayCents(d, (o) => o.status === "paid"));
+    const pendingSeries = [6, 5, 4, 3, 2, 1, 0].map((d) => dayCents(d, (o) => o.status === "pending"));
+    const verifiedYesterdayCents = revenueSeries[5] ?? 0;
+    const revenueTrendPct =
+      verifiedYesterdayCents > 0
+        ? Number((((verifiedTodayCents - verifiedYesterdayCents) / verifiedYesterdayCents) * 100).toFixed(1))
+        : verifiedTodayCents > 0
+          ? 100
+          : 0;
+    const autoVerifiedToday = rows.filter(
+      (o) =>
+        o.status === "paid" &&
+        new Date(o.verified_at ?? o.created_at) >= startOfDay &&
+        (o.ai_verification as any)?.decision === "auto_approved",
+    ).length;
+
+
     return {
       orders: rows.map((o) => ({
         id: o.id as string,
@@ -61,7 +90,16 @@ export const paymentQueue = createServerFn({ method: "GET" })
         reviewReason: (o.review_reason as string | null) ?? null,
 
       })),
-      metrics: { pendingCents, verifiedTodayCents, unresolvedTxids },
+      metrics: {
+        pendingCents,
+        verifiedTodayCents,
+        unresolvedTxids,
+        revenueSeries,
+        pendingSeries,
+        revenueTrendPct,
+        autoVerifiedToday,
+      },
+
     };
   });
 
