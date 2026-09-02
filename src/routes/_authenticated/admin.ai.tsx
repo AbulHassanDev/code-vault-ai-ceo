@@ -17,7 +17,7 @@ const money = (cents: number, currency = "USDT") =>
   `${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
 
 const activeTabClass =
-  "data-[state=active]:bg-cyan-500 data-[state=active]:text-slate-950 data-[state=active]:font-semibold data-[state=active]:shadow-none";
+  "data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-semibold data-[state=active]:shadow-none";
 
 const QUICK_PROMPTS = [
   { label: "Audit Pending TxIDs", prompt: "Audit all pending orders with submitted TxIDs. Summarize each order, its buyer, amount, and flag any suspicious patterns." },
@@ -248,7 +248,7 @@ function CommandCenter() {
                         type="button"
                         disabled={thinking}
                         onClick={() => send(q.prompt)}
-                        className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-4 py-1.5 font-mono text-xs text-cyan-400 transition hover:border-cyan-400 hover:bg-cyan-500/20 hover:text-cyan-300 disabled:opacity-50"
+                        className="rounded-full border border-primary/40 bg-primary/10 px-4 py-1.5 font-mono text-xs text-primary transition hover:border-primary hover:bg-primary/20 hover:text-primary/90 disabled:opacity-50"
                       >
                         {q.label}
                       </button>
@@ -375,8 +375,8 @@ function CommandCenter() {
                   onClick={() => setApprovalFilter(f.key)}
                   className={`rounded-full border px-4 py-1.5 font-mono text-xs transition ${
                     approvalFilter === f.key
-                      ? "border-cyan-500 bg-cyan-500 font-semibold text-slate-950"
-                      : "border-border bg-muted/30 text-muted-foreground hover:border-cyan-500/50 hover:text-foreground"
+                      ? "border-primary bg-primary font-semibold text-primary-foreground"
+                      : "border-border bg-muted/30 text-muted-foreground hover:border-primary/50 hover:text-foreground"
                   }`}
                 >
                   {f.label}
