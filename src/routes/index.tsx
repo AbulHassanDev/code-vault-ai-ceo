@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { listPublicProducts } from "@/lib/marketplace.functions";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const productsQuery = queryOptions({
   queryKey: ["public-products"],
