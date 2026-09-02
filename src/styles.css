@@ -115,10 +115,11 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     background-image:
-      radial-gradient(60rem 40rem at 80% -10%, oklch(0.79 0.14 194 / 0.1), transparent 60%),
-      radial-gradient(50rem 30rem at 0% 0%, oklch(0.68 0.16 300 / 0.08), transparent 55%);
+      radial-gradient(60rem 40rem at 80% -10%, oklch(0.585 0.21 277 / 0.12), transparent 60%),
+      radial-gradient(50rem 30rem at 0% 0%, oklch(0.65 0.2 300 / 0.08), transparent 55%);
     background-attachment: fixed;
     font-family: var(--font-sans);
+    letter-spacing: -0.01em;
   }
 
   code, pre, .font-mono {
@@ -127,10 +128,48 @@
 }
 
 @utility panel {
-  background-color: var(--color-card);
+  background-color: color-mix(in oklab, var(--color-card) 70%, transparent);
+  backdrop-filter: blur(12px);
   border: 1px solid var(--color-border);
+  border-top-color: oklch(1 0 0 / 0.08);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-panel);
+}
+
+@utility glass-panel {
+  background-color: oklch(0.205 0.02 258 / 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border);
+  border-top-color: oklch(1 0 0 / 0.1);
+  border-radius: var(--radius-xl);
+}
+
+@utility card-hover {
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+  &:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in oklab, var(--color-primary) 50%, var(--color-border));
+    box-shadow: var(--shadow-lift);
+  }
+}
+
+@utility pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 oklch(0.585 0.21 277 / 0.5);
+  }
+  50% {
+    opacity: 0.75;
+    box-shadow: 0 0 0 5px oklch(0.585 0.21 277 / 0);
+  }
 }
 
 @utility grid-lines {
