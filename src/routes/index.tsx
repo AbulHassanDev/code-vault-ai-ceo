@@ -37,9 +37,8 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  validateSearch: (search: Record<string, unknown>) => ({
-    industry: typeof search["industry"] === "string" ? (search["industry"] as string) : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { industry?: string } =>
+    typeof search["industry"] === "string" ? { industry: search["industry"] as string } : {},
   loader: ({ context }) => context.queryClient.ensureQueryData(productsQuery),
   errorComponent: ({ error }) => (
     <div className="p-10 text-center text-muted-foreground">Catalog unavailable: {error.message}</div>
