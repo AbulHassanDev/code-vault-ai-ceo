@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { CategoriesMenu } from "@/components/categories-menu";
 
 export function SiteHeader() {
   const [email, setEmail] = useState<string | null>(null);
