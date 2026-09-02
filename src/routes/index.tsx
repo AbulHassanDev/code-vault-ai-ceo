@@ -1,12 +1,14 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { SiteHeader } from "@/components/site-header";
 import { HeroVault } from "@/components/hero-vault";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
 import { CATEGORY_TABS, SORT_OPTIONS, type SortValue } from "@/lib/product-meta";
+import { INDUSTRY_BY_SLUG, industryCounts, matchesIndustry } from "@/lib/industries";
+import { IndustryGrid } from "@/components/industry-grid";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { listPublicProducts } from "@/lib/marketplace.functions";
