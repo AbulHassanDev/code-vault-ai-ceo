@@ -212,7 +212,10 @@ function CommandCenter() {
             },
           ].map((m) => (
             <div key={m.label} className="panel p-5">
-              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">{m.label}</p>
+              <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                <span className="pulse-dot size-1.5 rounded-full bg-primary" />
+                {m.label}
+              </p>
               <p className={`mt-2 text-2xl font-semibold tracking-tight ${m.tone}`}>{m.value}</p>
             </div>
           ))}
