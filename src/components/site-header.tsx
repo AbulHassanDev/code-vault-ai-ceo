@@ -42,10 +42,11 @@ export function SiteHeader() {
         <nav className="flex items-center gap-1">
           <Link
             to="/"
-            className="rounded-md px-3.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="hidden rounded-md px-3.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:inline-block"
           >
             Marketplace
           </Link>
+          <CategoriesMenu />
           <ThemeToggle />
           {email ? (
             <>
