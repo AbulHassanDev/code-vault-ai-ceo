@@ -10,6 +10,7 @@ import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Check, Copy, Clock, ShieldCheck, ArrowRight } from "lucide-react";
@@ -252,6 +253,7 @@ function CheckoutPage() {
                     />
                   </div>
                   <Button type="submit" disabled={busy}>
+                    {busy && <Spinner className="mr-2" />}
                     {busy ? "Working…" : mode === "signup" ? "Create account & continue" : "Sign in & continue"}
                   </Button>
                   <Button type="button" variant="outline" onClick={google}>
@@ -291,7 +293,11 @@ function CheckoutPage() {
                         <div className="text-xs text-muted-foreground">QR / Pay ID — send {priceUsdt} USDT, zero fees</div>
                       </div>
                     </div>
-                    <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
+                    {busy ? (
+                      <Spinner className="shrink-0 text-primary" />
+                    ) : (
+                      <ArrowRight className="h-4 w-4 shrink-0 text-primary" />
+                    )}
                   </button>
                   <div
                     aria-disabled
@@ -370,7 +376,8 @@ function CheckoutPage() {
                     />
                   </div>
                   <Button type="submit" size="lg" className="w-full" disabled={busy}>
-                    {busy ? "Submitting…" : "Submit Payment for Verification"}
+                    {busy && <Spinner className="mr-2" />}
+                    {busy ? "Verifying submission…" : "Submit Payment for Verification"}
                   </Button>
                 </form>
               </div>
