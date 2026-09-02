@@ -56,20 +56,24 @@ function Marketplace() {
       <SiteHeader />
 
       <section className="grid-lines border-b border-border">
-        <div className="mx-auto max-w-6xl px-4 py-20">
-          <Badge variant="outline" className="mb-6 font-mono text-xs tracking-widest text-primary">
-            AI-OPERATED MARKETPLACE
+        <div className="mx-auto max-w-6xl px-4 py-24">
+          <Badge
+            variant="outline"
+            className="mb-6 flex w-fit items-center gap-2 border-primary/30 bg-primary/10 px-3 py-1 font-mono text-xs tracking-widest text-primary"
+          >
+            <span className="pulse-dot size-1.5 rounded-full bg-primary" />
+            LIVE · AI-OPERATED MARKETPLACE
           </Badge>
-          <h1 className="max-w-3xl text-5xl font-semibold leading-[1.05] tracking-tight">
-            Production source code, shipped by an autonomous storefront.
+          <h1 className="max-w-3xl text-5xl font-bold leading-[1.05] tracking-tight sm:text-6xl">
+            Ship faster with production-grade source code.
           </h1>
-          <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
-            SaaS starter kits, dashboards, mobile apps and AI applications — reviewed for quality, delivered securely,
-            and operated day to day by an AI system under founder control.
+          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+            SaaS starter kits, dashboards, mobile apps and AI applications — quality-gated, securely delivered, and
+            operated around the clock by an AI system under founder control.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-9 flex flex-wrap gap-3">
             <a href="#catalog">
-              <Button size="lg">Browse the catalog</Button>
+              <Button size="lg" className="shadow-glow">Browse the catalog</Button>
             </a>
             <Link to="/auth">
               <Button size="lg" variant="outline">
@@ -86,7 +90,7 @@ function Marketplace() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search stacks, e.g. Next.js"
-            className="h-10 w-64 rounded-md border border-input bg-card px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+            className="h-10 w-64 rounded-lg border border-input bg-card/60 px-3 text-sm backdrop-blur-md outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-ring/40"
           />
           <div className="flex flex-wrap gap-2">
             {categories.map((c) => (
@@ -111,7 +115,7 @@ function Marketplace() {
               key={p.id}
               to="/product/$slug"
               params={{ slug: p.slug }}
-              className="panel group flex flex-col gap-3 p-5 transition-transform hover:-translate-y-1"
+              className="panel card-hover group flex flex-col gap-3 p-5"
             >
               <div className="flex items-start justify-between gap-3">
                 <h2 className="text-lg font-semibold leading-tight group-hover:text-primary">{p.title}</h2>
@@ -137,7 +141,7 @@ function Marketplace() {
         )}
       </section>
 
-      <footer className="border-t border-border py-10 text-center font-mono text-xs text-muted-foreground">
+      <footer className="border-t border-border/60 py-14 text-center font-mono text-xs text-muted-foreground">
         CODEVAULT · operated by an AI system with founder approval gates
       </footer>
     </div>
