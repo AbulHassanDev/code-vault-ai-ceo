@@ -245,7 +245,7 @@ export default function VaultScene() {
   const nodeCount = compact ? 8 : 20;
 
   const p: Palette = dark
-    ? { steel: "#59627a", steelDark: "#232a3b", neon: "#818cf8", rim: "#8b5cf6", glass: "#c7d2fe" }
+    ? { steel: "#6d7791", steelDark: "#2c3548", neon: "#818cf8", rim: "#8b5cf6", glass: "#c7d2fe" }
     : { steel: "#c3cad8", steelDark: "#8e98ac", neon: "#4f46e5", rim: "#7c3aed", glass: "#ffffff" };
 
   return (
@@ -253,17 +253,17 @@ export default function VaultScene() {
       dpr={compact ? 1 : [1, 2]}
       performance={{ min: 0.5 }}
       shadows
-      camera={{ position: [0, 0.5, 6.4], fov: 42 }}
+      camera={{ position: [0, 0.4, 7.2], fov: 42 }}
       gl={{ alpha: true, antialias: !compact, toneMapping: THREE.ACESFilmicToneMapping }}
       style={{ background: "transparent" }}
     >
       {/* 3-point lighting: key spot overhead, violet rim fill, soft ambient */}
-      <ambientLight intensity={dark ? 0.35 : 0.85} />
+      <ambientLight intensity={dark ? 0.75 : 1.1} />
       <spotLight
         position={[3.5, 6, 5]}
         angle={0.6}
         penumbra={0.8}
-        intensity={dark ? 120 : 90}
+        intensity={dark ? 220 : 140}
         color="#ffffff"
         castShadow={!compact}
         shadow-mapSize={[1024, 1024]}
@@ -289,7 +289,7 @@ export default function VaultScene() {
         />
       </Environment>
 
-      <group position={[0, 0.15, 0]}>
+      <group position={[0, 0.15, 0]} scale={0.95}>
         <VaultDoor p={p} dark={dark} compact={compact} />
         <DataNodes count={nodeCount} color={p.neon} />
       </group>
