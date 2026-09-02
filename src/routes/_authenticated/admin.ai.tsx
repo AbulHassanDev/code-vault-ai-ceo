@@ -534,6 +534,7 @@ function CommandCenter() {
                     mode: "merchant_api" as const,
                     title: "Binance Pay Merchant API",
                     help: "Signed webhooks fulfil orders automatically after RSA verification.",
+                    badge: "Coming soon",
                   },
                 ].map((opt) => {
                   const active = (s?.payment_mode ?? "manual") === opt.mode;
@@ -556,7 +557,14 @@ function CommandCenter() {
                     >
                       <div className="flex items-center justify-between gap-2">
                         <p className="font-medium">{opt.title}</p>
-                        {active && <Badge>active</Badge>}
+                        <span className="flex items-center gap-2">
+                          {"badge" in opt && opt.badge && (
+                            <Badge variant="outline" className="font-mono text-[10px] uppercase tracking-widest">
+                              {opt.badge}
+                            </Badge>
+                          )}
+                          {active && <Badge>active</Badge>}
+                        </span>
                       </div>
                       <p className="mt-1 text-sm text-muted-foreground">{opt.help}</p>
                     </button>
