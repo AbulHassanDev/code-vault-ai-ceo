@@ -104,9 +104,11 @@ export async function verifyProofWithVision(orderId: string): Promise<VisionResu
         .from("orders")
         .update({ ai_verification: result as any, review_reason: tags.join(", ") })
         .eq("id", order.id);
+      await routeToApprovalQueue(order, tags, extraction);
     }
     return result;
   };
+
 
   if (!order) return { decision: "needs_human_review", tags: ["Order not found"], extraction: null, model: MODEL, checkedAt };
   if (order.status !== "pending") return fail(["Order is not pending"]);
