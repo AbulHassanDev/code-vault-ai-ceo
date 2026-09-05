@@ -133,7 +133,11 @@ export const requestDownload = createServerFn({ method: "POST" })
       return { ok: false, message: "The download file is missing. Support has been alerted automatically." };
     }
 
-    const { data: signed } = await supabase.storage.from("product-assets").createSignedUrl(product.asset_path, 300);
+    // Private bucket: sign with the service role only after the purchase check above passed.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: signed } = await supabaseAdmin.storage
+      .from("product-assets")
+      .createSignedUrl(product.asset_path, 300);
     await supabase.from("download_events").insert({
       user_id: userId,
       product_id: data.productId,
