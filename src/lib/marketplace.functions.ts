@@ -97,6 +97,7 @@ export const startCheckout = createServerFn({ method: "POST" })
       ok: true,
       orderId: order.id as string,
       merchantTradeNo,
+      amountCents: order.amount_cents as number,
       message: paymentsConfigured
         ? `Order ${merchantTradeNo} created. Ownership unlocks only after Binance Pay confirms the payment against a verified signature.`
         : "Order created and waiting for payment. Binance Pay is not connected yet, so ownership stays unverified — the AI can never mark it paid.",
