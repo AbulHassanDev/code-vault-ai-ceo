@@ -619,6 +619,8 @@ export type Database = {
           buyer_txid: string | null
           created_at: string
           currency: string
+          discount_cents: number
+          discount_code: string | null
           failure_reason: string | null
           id: string
           merchant_trade_no: string | null
@@ -641,6 +643,8 @@ export type Database = {
           buyer_txid?: string | null
           created_at?: string
           currency?: string
+          discount_cents?: number
+          discount_code?: string | null
           failure_reason?: string | null
           id?: string
           merchant_trade_no?: string | null
@@ -663,6 +667,8 @@ export type Database = {
           buyer_txid?: string | null
           created_at?: string
           currency?: string
+          discount_cents?: number
+          discount_code?: string | null
           failure_reason?: string | null
           id?: string
           merchant_trade_no?: string | null
@@ -911,6 +917,42 @@ export type Database = {
         }
         Relationships: []
       }
+      support_tickets: {
+        Row: {
+          admin_reply: string | null
+          created_at: string
+          id: string
+          message: string
+          order_id: string | null
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_reply?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          order_id?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_reply?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          order_id?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -945,6 +987,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      lookup_discount: { Args: { _code: string }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
