@@ -5,6 +5,8 @@ import { useServerFn } from "@tanstack/react-start";
 import QRCode from "react-qr-code";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { checkDiscount } from "@/lib/ops.functions";
+import { applyDiscount } from "@/lib/discount";
 import { getPublicProduct, startCheckout, submitPaymentProof } from "@/lib/marketplace.functions";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
@@ -115,7 +117,19 @@ function CheckoutPage() {
   const [proof, setProof] = useState<UploadedProof | null>(null);
   const [autoVerified, setAutoVerified] = useState(false);
 
-  const priceUsdt = product ? (product.price_cents / 100).toFixed(0) : "0";
+  const verifyCode = useServerFn(checkDiscount);
+  const [code, setCode] = useState("");
+  const [pct, setPct] = useState(0);
+  const priced = applyDiscount(product?.price_cents ?? 0, pct);
+  const priceUsdt = (priced.totalCents / 100).toFixed(2).replace(/\.00$/, "");
+
+  async function applyCode() {
+    if (!code.trim()) return;
+    if (!signedIn) return toast.error("Sign in first to use a discount code.");
+    const r = await verifyCode({ data: { code } });
+    if (r.ok) { setPct(r.percentOff); toast.success(`${r.percentOff}% off applied.`); }
+    else { setPct(0); toast.error("That discount code is not valid."); }
+  }
 
   useEffect(() => {
     let active = true;
@@ -132,7 +146,7 @@ function CheckoutPage() {
   async function placeOrder() {
     setBusy(true);
     try {
-      const result = await checkout({ data: { productId: product.id } });
+      const result = await checkout({ data: { productId: product.id, discountCode: pct ? code : undefined } });
       if (result.ok) {
         setOrder({ id: (result as any).orderId, merchantTradeNo: (result as any).merchantTradeNo });
         toast.success("Order created — complete payment with Binance Pay.");
@@ -428,6 +442,17 @@ function CheckoutPage() {
             <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">Total</span>
             <span className="font-mono text-2xl text-primary">${priceUsdt}</span>
           </div>
+          {pct > 0 && (
+            <p className="mt-1 text-right text-xs text-muted-foreground">
+              <s>${(product.price_cents / 100).toFixed(0)}</s> · {pct}% off with {code.toUpperCase()}
+            </p>
+          )}
+          {!order && (
+            <div className="mt-4 flex gap-2">
+              <Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Discount code" className="font-mono uppercase" />
+              <Button type="button" variant="outline" onClick={applyCode}>Apply</Button>
+            </div>
+          )}
           <Link
             to="/product/$slug"
             params={{ slug: product.slug }}

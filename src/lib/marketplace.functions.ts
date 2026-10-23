@@ -46,7 +46,9 @@ export const getPublicProduct = createServerFn({ method: "GET" })
 /** Creates a pending order. Ownership is only granted by a verified payment callback. */
 export const startCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ productId: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) =>
+    z.object({ productId: z.string().uuid(), discountCode: z.string().max(40).optional() }).parse(input),
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as any;
     const { data: product, error: pErr } = await supabase
@@ -57,6 +59,16 @@ export const startCheckout = createServerFn({ method: "POST" })
       .maybeSingle();
     if (pErr || !product) return { ok: false, message: "Product not available." };
 
+    let pct = 0;
+    const code = data.discountCode?.trim().toUpperCase() || null;
+    if (code) {
+      const { data: found } = await supabase.rpc("lookup_discount", { _code: code });
+      if (!found) return { ok: false, message: "That discount code is not valid." };
+      pct = found as number;
+    }
+    const { applyDiscount } = await import("./discount");
+    const priced = applyDiscount(product.price_cents, pct);
+
     const merchantTradeNo = `CV${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
     const paymentsConfigured = Boolean(process.env["BINANCE_PAY_PUBLIC_CERT"]);
 
@@ -65,7 +77,9 @@ export const startCheckout = createServerFn({ method: "POST" })
       .insert({
         user_id: userId,
         product_id: product.id,
-        amount_cents: product.price_cents,
+        amount_cents: priced.totalCents,
+        discount_code: code,
+        discount_cents: priced.discountCents,
         status: "pending",
         provider: paymentsConfigured ? "binance_pay" : "unconfigured",
         merchant_trade_no: merchantTradeNo,
@@ -83,6 +97,7 @@ export const startCheckout = createServerFn({ method: "POST" })
       ok: true,
       orderId: order.id as string,
       merchantTradeNo,
+      amountCents: order.amount_cents as number,
       message: paymentsConfigured
         ? `Order ${merchantTradeNo} created. Ownership unlocks only after Binance Pay confirms the payment against a verified signature.`
         : "Order created and waiting for payment. Binance Pay is not connected yet, so ownership stays unverified — the AI can never mark it paid.",
