@@ -16,8 +16,11 @@ import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedLibraryRouteImport } from './routes/_authenticated/library'
+import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
 import { Route as AuthenticatedAdminAiRouteImport } from './routes/_authenticated/admin.ai'
+import { Route as AuthenticatedAdminInboxRouteImport } from './routes/_authenticated/admin.inbox'
+import { Route as AuthenticatedAdminProductsRouteImport } from './routes/_authenticated/admin.products'
 import { Route as ApiPublicWebhooksBinancePayRouteImport } from './routes/api/public/webhooks/binance-pay'
 
 const IndexRoute = IndexRouteImport.update({
@@ -54,6 +57,11 @@ const AuthenticatedLibraryRoute = AuthenticatedLibraryRouteImport.update({
   path: '/library',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedOrdersRoute = AuthenticatedOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ProductSlugRoute = ProductSlugRouteImport.update({
   id: '/product/$slug',
   path: '/product/$slug',
@@ -64,6 +72,17 @@ const AuthenticatedAdminAiRoute = AuthenticatedAdminAiRouteImport.update({
   path: '/admin/ai',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminInboxRoute = AuthenticatedAdminInboxRouteImport.update({
+  id: '/admin/inbox',
+  path: '/admin/inbox',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminProductsRoute =
+  AuthenticatedAdminProductsRouteImport.update({
+    id: '/admin/products',
+    path: '/admin/products',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicWebhooksBinancePayRoute =
   ApiPublicWebhooksBinancePayRouteImport.update({
     id: '/api/public/webhooks/binance-pay',
@@ -78,8 +97,11 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
   '/library': typeof AuthenticatedLibraryRoute
+  '/orders': typeof AuthenticatedOrdersRoute
   '/product/$slug': typeof ProductSlugRoute
   '/admin/ai': typeof AuthenticatedAdminAiRoute
+  '/admin/inbox': typeof AuthenticatedAdminInboxRoute
+  '/admin/products': typeof AuthenticatedAdminProductsRoute
   '/api/public/webhooks/binance-pay': typeof ApiPublicWebhooksBinancePayRoute
 }
 export interface FileRoutesByTo {
@@ -89,8 +111,11 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
   '/library': typeof AuthenticatedLibraryRoute
+  '/orders': typeof AuthenticatedOrdersRoute
   '/product/$slug': typeof ProductSlugRoute
   '/admin/ai': typeof AuthenticatedAdminAiRoute
+  '/admin/inbox': typeof AuthenticatedAdminInboxRoute
+  '/admin/products': typeof AuthenticatedAdminProductsRoute
   '/api/public/webhooks/binance-pay': typeof ApiPublicWebhooksBinancePayRoute
 }
 export interface FileRoutesById {
@@ -102,8 +127,11 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
   '/_authenticated/library': typeof AuthenticatedLibraryRoute
+  '/_authenticated/orders': typeof AuthenticatedOrdersRoute
   '/product/$slug': typeof ProductSlugRoute
   '/_authenticated/admin/ai': typeof AuthenticatedAdminAiRoute
+  '/_authenticated/admin/inbox': typeof AuthenticatedAdminInboxRoute
+  '/_authenticated/admin/products': typeof AuthenticatedAdminProductsRoute
   '/api/public/webhooks/binance-pay': typeof ApiPublicWebhooksBinancePayRoute
 }
 export interface FileRouteTypes {
@@ -115,8 +143,11 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/terms'
     | '/library'
+    | '/orders'
     | '/product/$slug'
     | '/admin/ai'
+    | '/admin/inbox'
+    | '/admin/products'
     | '/api/public/webhooks/binance-pay'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -126,8 +157,11 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/terms'
     | '/library'
+    | '/orders'
     | '/product/$slug'
     | '/admin/ai'
+    | '/admin/inbox'
+    | '/admin/products'
     | '/api/public/webhooks/binance-pay'
   id:
     | '__root__'
@@ -138,8 +172,11 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/terms'
     | '/_authenticated/library'
+    | '/_authenticated/orders'
     | '/product/$slug'
     | '/_authenticated/admin/ai'
+    | '/_authenticated/admin/inbox'
+    | '/_authenticated/admin/products'
     | '/api/public/webhooks/binance-pay'
   fileRoutesById: FileRoutesById
 }
@@ -205,6 +242,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLibraryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/orders': {
+      id: '/_authenticated/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof AuthenticatedOrdersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/product/$slug': {
       id: '/product/$slug'
       path: '/product/$slug'
@@ -219,6 +263,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAiRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/inbox': {
+      id: '/_authenticated/admin/inbox'
+      path: '/admin/inbox'
+      fullPath: '/admin/inbox'
+      preLoaderRoute: typeof AuthenticatedAdminInboxRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/products': {
+      id: '/_authenticated/admin/products'
+      path: '/admin/products'
+      fullPath: '/admin/products'
+      preLoaderRoute: typeof AuthenticatedAdminProductsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/webhooks/binance-pay': {
       id: '/api/public/webhooks/binance-pay'
       path: '/api/public/webhooks/binance-pay'
@@ -231,12 +289,18 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedLibraryRoute: typeof AuthenticatedLibraryRoute
+  AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
   AuthenticatedAdminAiRoute: typeof AuthenticatedAdminAiRoute
+  AuthenticatedAdminInboxRoute: typeof AuthenticatedAdminInboxRoute
+  AuthenticatedAdminProductsRoute: typeof AuthenticatedAdminProductsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLibraryRoute: AuthenticatedLibraryRoute,
+  AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
   AuthenticatedAdminAiRoute: AuthenticatedAdminAiRoute,
+  AuthenticatedAdminInboxRoute: AuthenticatedAdminInboxRoute,
+  AuthenticatedAdminProductsRoute: AuthenticatedAdminProductsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
